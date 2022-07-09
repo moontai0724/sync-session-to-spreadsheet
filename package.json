@@ -1,0 +1,38 @@
+{
+  "name": "sync-session-to-spreadsheet",
+  "version": "1.0.0",
+  "description": "A GAS to fetch session data and sync it into a spreadsheet",
+  "private": true,
+  "license": "MIT",
+  "author": {
+    "name": "moontai0724",
+    "email": "moontai0724@gmail.com"
+  },
+  "lint-staged": {
+    "src/**/*.{js,vue}": "eslint --cache",
+    "src/**/*.**": "prettier --check --ignore-unknown ./src"
+  },
+  "scripts": {
+    "lint": "yarn lint:eslint && yarn lint:prettier",
+    "lint:eslint": "eslint --ext \".js,.ts\" --ignore-path .gitignore .",
+    "lint:prettier": "prettier --check ./src",
+    "build": "webpack --config webpack.config.js",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^16.3.0",
+    "@commitlint/config-conventional": "^16.2.4",
+    "@types/google-apps-script": "^1.0.51",
+    "@typescript-eslint/eslint-plugin": "^5.23.0",
+    "@typescript-eslint/parser": "^5.23.0",
+    "eslint": "^8.15.0",
+    "eslint-config-prettier": "^8.5.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^12.4.1",
+    "prettier": "2.6.2",
+    "ts-loader": "^9.3.0",
+    "typescript": "^4.6.4",
+    "webpack": "^5.72.1",
+    "webpack-cli": "^4.9.2"
+  }
+}

@@ -6,19 +6,23 @@ import SessionSheetManager from "./SessionSheetManager";
 
 global.entrypoint = function (): void {
   const dataManager = new DataManager(ENVIRONMENT.DATA_SOURCE);
-  const importantSessionsSheet = new ImportantSessionsSheetManager();
+  const importantSessionsSheet = new ImportantSessionsSheetManager(
+    dataManager.data,
+  );
   Logger.log("Dates: %s", dataManager.dates);
   Logger.log("Start: %s", dataManager.startHour);
   Logger.log("End: %s", dataManager.endHour);
 
   dataManager.dates.forEach((date, index) => {
-    Logger.log("Init Day %s (%s)", index, date);
+    Logger.log("Init Day %s (%s)", index + 1, date);
     const sessionSheet = new SessionSheetManager(
-      `Day ${index} (${date})`,
+      `Day ${index + 1} (${date})`,
       date,
       dataManager.startHour,
       dataManager.endHour,
       dataManager.data,
+      importantSessionsSheet.sessions,
     );
+    sessionSheet.fillData();
   });
 };

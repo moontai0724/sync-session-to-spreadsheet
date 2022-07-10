@@ -67,11 +67,17 @@ export default class ImportantSessionsSheetManager {
   ];
   public spreadsheet;
   public sheet;
+  public sessions;
 
-  public constructor() {
+  public constructor(data: EventData) {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = this.spreadsheet.getSheetByName(this.SHEET_NAME);
     this.sheet = sheet ?? this.createSheet();
+    const sessionIds = this.getIdColumn().getValues().flat().filter(Boolean);
+    this.sessions = data.sessions.filter(session =>
+      sessionIds.includes(session.id),
+    );
+    this.sessions.forEach(session => this.setDetails(session));
   }
 
   public createSheet(): GoogleAppsScript.Spreadsheet.Sheet {
@@ -108,12 +114,6 @@ export default class ImportantSessionsSheetManager {
     const column = this.sheet.getRange(2, 1, this.sheet.getMaxRows(), 1);
 
     return column;
-  }
-
-  public getIds(): string[] {
-    const ids = this.getIdColumn().getValues().flat().filter(Boolean);
-
-    return ids;
   }
 
   public setDetails(session: EventSession): void {

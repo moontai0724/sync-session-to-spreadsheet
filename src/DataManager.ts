@@ -1,4 +1,4 @@
-export default class SessionManager {
+export default class DataManager {
   public data: EventData;
 
   public constructor(public sourceUrl: string) {

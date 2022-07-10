@@ -70,19 +70,8 @@ export default class ImportantSessionsSheetManager {
 
   public constructor() {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-
-    if (!this.isSheetExist()) {
-      this.sheet = this.createSheet();
-    } else {
-      this.sheet = this.spreadsheet.getSheetByName(
-        this.SHEET_NAME,
-      ) as GoogleAppsScript.Spreadsheet.Sheet;
-    }
-  }
-
-  public isSheetExist(): boolean {
     const sheet = this.spreadsheet.getSheetByName(this.SHEET_NAME);
-    return !!sheet;
+    this.sheet = sheet ?? this.createSheet();
   }
 
   public createSheet(): GoogleAppsScript.Spreadsheet.Sheet {

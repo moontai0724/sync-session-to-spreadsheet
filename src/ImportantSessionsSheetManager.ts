@@ -116,7 +116,7 @@ export default class ImportantSessionsSheetManager {
   }
 
   public getIdColumn(): GoogleAppsScript.Spreadsheet.Range {
-    const column = this.sheet.getRange(1, 1, this.sheet.getMaxRows(), 1);
+    const column = this.sheet.getRange(2, 1, this.sheet.getMaxRows(), 1);
 
     return column;
   }

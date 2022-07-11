@@ -52,3 +52,5 @@ dist
 ### Node Patch ###
 # Serverless Webpack directories
 .webpack/
+
+config.js

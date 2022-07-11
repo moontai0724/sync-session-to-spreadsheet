@@ -18,6 +18,7 @@ export default class SessionSheetManager {
   public roomColumnReferance: Record<EventRoomId, number>;
   public spacingColumns: number[];
   public baseTime: Date;
+  public roomTypes: Record<EventRoomId, EventSessionTypeId[]> = {};
 
   /**
    * @param sheetName Name of the sheet to be interact, can be a non-exist sheet, will auto create if so.
@@ -224,9 +225,52 @@ export default class SessionSheetManager {
           "black",
           SpreadsheetApp.BorderStyle.SOLID,
         );
+
+      this.roomTypes[session.room] = [
+        ...(this.roomTypes[session.room] ?? []),
+        session.type,
+      ];
     });
+    this.setSessionType();
     this.hightlightSessions();
     this.normalizeBorder();
+  }
+
+  /**
+   * Set a type for each session track (column) above row of room
+   * by summary types of session in the track and find the most common type.
+   */
+  public setSessionType(): void {
+    for (const roomId in this.roomTypes) {
+      const types = this.roomTypes[roomId];
+      const typeAmount = types.reduce(
+        (all: Record<string, number>, value) => ({
+          ...all,
+          [value]: (all[value] ?? 0) + 1,
+        }),
+        {},
+      );
+      const maxAmount = Math.max(...Object.values(typeAmount));
+      const typeId = Array.from(Object.entries(typeAmount)).find(
+        current => current[1] === maxAmount,
+      )?.[0];
+      if (!typeId) continue;
+      const type = this.data.session_types.find(type => type.id === typeId);
+      if (!type) continue;
+      const typeColumn = this.roomColumnReferance[roomId];
+
+      const cellAboveRoom = this.sheet.getRange(this.ROOM_ROW - 1, typeColumn);
+
+      if (cellAboveRoom.getDisplayValue() !== "") {
+        Logger.log(
+          "Warning: Cell above room %s is not empty to be filled with type, ignored to fill type.",
+          roomId,
+        );
+        continue;
+      }
+
+      cellAboveRoom.setValue(type.zh.name);
+    }
   }
 
   /**

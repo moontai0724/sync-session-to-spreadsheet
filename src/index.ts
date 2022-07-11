@@ -18,10 +18,10 @@ global.entrypoint = function (): void {
     const sessionSheet = new SessionSheetManager(
       `Day ${index + 1} (${date})`,
       date,
-      dataManager.startHour,
-      dataManager.endHour,
       dataManager.data,
       importantSessionsSheet.sessions,
+      dataManager.startHour,
+      dataManager.endHour,
     );
     sessionSheet.fillData();
   });

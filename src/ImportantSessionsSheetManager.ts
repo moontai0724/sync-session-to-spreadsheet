@@ -1,7 +1,10 @@
 export default class ImportantSessionsSheetManager {
+  /** Sheet name of important sessions, will auto create when construct if not exists. */
   public readonly SHEET_NAME = "重要議程";
+  /** Default preserved empty rows for fill-in, no any side effect if changed. */
   public readonly PRESERVED_ROWS = 10;
-  public readonly SCHEMA = [
+  /** Schema of the sheet content by column */
+  public readonly SCHEMA: ColumnSchema[] = [
     {
       title: "議程代號",
       width: 100,
@@ -69,7 +72,18 @@ export default class ImportantSessionsSheetManager {
   public sheet;
   public sessions;
 
-  public constructor(data: EventData) {
+  /**
+   * @param data Data to be used for fill-in session infos
+   */
+  public constructor(
+    data: EventData = {
+      sessions: [],
+      speakers: [],
+      session_types: [],
+      rooms: [],
+      tags: [],
+    },
+  ) {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = this.spreadsheet.getSheetByName(this.SHEET_NAME);
     this.sheet = sheet ?? this.createSheet();
@@ -80,7 +94,11 @@ export default class ImportantSessionsSheetManager {
     this.sessions.forEach(session => this.setDetails(session));
   }
 
-  public createSheet(): GoogleAppsScript.Spreadsheet.Sheet {
+  /**
+   * Create a default structure of sheet with preserved rows by schema.
+   * @returns Sheet of created important sessions
+   */
+  private createSheet(): GoogleAppsScript.Spreadsheet.Sheet {
     const sheet = this.spreadsheet.insertSheet(this.SHEET_NAME);
 
     const titles = this.SCHEMA.map(v => v.title);
@@ -110,12 +128,21 @@ export default class ImportantSessionsSheetManager {
     return sheet;
   }
 
+  /**
+   * Get a column range of all important sessions' id.
+   * @returns Column of ids exclude title row.
+   */
   public getIdColumn(): GoogleAppsScript.Spreadsheet.Range {
     const column = this.sheet.getRange(2, 1, this.sheet.getMaxRows(), 1);
 
     return column;
   }
 
+  /**
+   * Set details of session in sheet by id.
+   * @param session session to be set
+   * @throws Error if session not found
+   */
   public setDetails(session: EventSession): void {
     const rowIndex = this.getRowIndex(session.id);
     this.SCHEMA.forEach((schema, index) => {
@@ -124,10 +151,16 @@ export default class ImportantSessionsSheetManager {
     });
   }
 
-  public getRowIndex(id: string): number {
+  /**
+   * Get row index of session by id.
+   * @param sessionId id of the session to be found
+   * @throws Error if session not found
+   * @returns ㄙrow index of session
+   */
+  public getRowIndex(sessionId: string): number {
     const column = this.getIdColumn();
-    const rowIndex = column.createTextFinder(id).findNext()?.getRow();
-    if (!rowIndex) throw new Error(`ImportantSession: ${id} not found`);
+    const rowIndex = column.createTextFinder(sessionId).findNext()?.getRow();
+    if (!rowIndex) throw new Error(`ImportantSession: ${sessionId} not found`);
     return rowIndex;
   }
 }

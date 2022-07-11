@@ -1,9 +1,13 @@
 export default class DataManager {
+  /** Parsed data of event */
   public data: EventData;
   public startHour: number;
   public endHour: number;
   public dates: string[];
 
+  /**
+   * @param sourceUrl url of the raw data, should in specific format (which is usable by OPass)
+   */
   public constructor(public sourceUrl: string) {
     this.data = this.fetch();
     this.data.rooms = this.getActiveRooms();
@@ -19,6 +23,10 @@ export default class DataManager {
     return JSON.parse(responsedText) as EventData;
   }
 
+  /**
+   * Filter rooms that are really used by sessions
+   * @returns Array of active rooms
+   */
   public getActiveRooms(): EventRoom[] {
     const realRoomIds = Array.from(
       new Set(this.data.sessions.map(session => session.room).sort()),
@@ -30,6 +38,10 @@ export default class DataManager {
     return rooms;
   }
 
+  /**
+   * Read all sessions and find earliest start hour and latest end hour
+   * @returns Two item array represents start and end hour
+   */
   public getHourRange(): [number, number] {
     let min = 24;
     let max = 0;
@@ -49,6 +61,10 @@ export default class DataManager {
     return [min, max];
   }
 
+  /**
+   * Read all sessions and find all dates that have sessions
+   * @returns An array of ordered dates represents in YYYY-MM-DD format
+   */
   public getDates(): string[] {
     const dates = Array.from(
       new Set(

@@ -1,6 +1,17 @@
 export default class SessionSheetManager {
+  /**
+   * Column index of time, starts from 1.
+   * Side effect: will read first row of time to be the base time to calculate where sessions are going to be put.
+   * This only read hour of the time, this script is hour-based.
+   */
   public readonly TIME_COLUMN = 1;
+  /**
+   * Row index of room, starts from 1.
+   * Side effect: will default the line after `ROOM_ROW` is the first empty line for data to write.
+   * Please leave rows below this row empty.
+   */
   public readonly ROOM_ROW = 3;
+  /** A unit time in minute, will used for init sheet and calculate where sessions are going to be put. */
   public readonly UNIT_TIME_MINUTE = 5;
   public spreadsheet;
   public sheet;
@@ -8,13 +19,21 @@ export default class SessionSheetManager {
   public spacingColumns: number[];
   public baseTime: Date;
 
+  /**
+   * @param sheetName Name of the sheet to be interact, can be a non-exist sheet, will auto create if so.
+   * @param date Date of the event in this sheet, in format that parsable by `Date` object.
+   * @param data Data of complete event.
+   * @param importantSessions Important sessions that will be highlighted in red border and background.
+   * @param startHour The first hour of this event, only used for create sheet, will be auto overwitten by the first row of time if the sheet already exists.
+   * @param endHour The end hour of this sheet, is important when sheet is empty, no usage if sheet is not empty.
+   */
   public constructor(
     public sheetName: string,
     public date: string,
-    public startHour: number,
-    public endHour: number,
     public data: EventData,
-    public importantSessions: EventSession[],
+    public importantSessions: EventSession[] = [],
+    public startHour: number = 0,
+    public endHour: number = 24,
   ) {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = this.spreadsheet.getSheetByName(this.sheetName);
@@ -40,6 +59,11 @@ export default class SessionSheetManager {
     );
   }
 
+  /**
+   * Create a default structure of sheet
+   * includes rooms, times and styles.
+   * @returns Sheet of created session
+   */
   public createSheet(): GoogleAppsScript.Spreadsheet.Sheet {
     const sheet = this.spreadsheet.insertSheet(this.sheetName);
 
@@ -101,6 +125,10 @@ export default class SessionSheetManager {
     return sheet;
   }
 
+  /**
+   * Summary and find referance between room and column index.
+   * @returns A referance of room column, which is a map of room id to column index.
+   */
   public getRoomColumnReferance(): Record<EventRoomId, number> {
     const roomIds = this.data.rooms.map(room => room.id);
     const roomColumnReferance = roomIds.reduce((all, roomId) => {
@@ -118,6 +146,12 @@ export default class SessionSheetManager {
     return roomColumnReferance;
   }
 
+  /**
+   * Get spacing columns.
+   * If a column titled with keyword "拍攝者" that will be a spaceing column.
+   * Will draw a black border for spacing columns later.
+   * @returns An array of column index that is used for spacing.
+   */
   public getSpacingColumns(): number[] {
     const spacingColumns = this.sheet
       .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
@@ -128,6 +162,10 @@ export default class SessionSheetManager {
     return spacingColumns;
   }
 
+  /**
+   * Clear current existing sessions in this sheet.
+   * Only clear those sessions columns that are identified in RoomColumnReferance.
+   */
   public clearCurrentSessions(): void {
     const sessionColumns = Object.values(this.roomColumnReferance);
     for (const column of sessionColumns) {
@@ -138,6 +176,13 @@ export default class SessionSheetManager {
     }
   }
 
+  /**
+   * Fill sessions data into sheet.
+   * Will cleare current sessions first.
+   * Will fill sessions data into sheet.
+   * Will draw black border for spacing columns.
+   * Will hightlight sessions that are marked as important.
+   */
   public fillData(): void {
     this.clearCurrentSessions();
     this.data.sessions.forEach(session => {
@@ -184,6 +229,11 @@ export default class SessionSheetManager {
     this.normalizeBorder();
   }
 
+  /**
+   * Get a row index by time.
+   * @param time A time string which parsable by Date object.
+   * @returns Corresponding row index of the time.
+   */
   public getRowIndexOfTime(time: string): number {
     const sessionTime = new Date(time);
     const offsetTime = sessionTime.getTime() - this.baseTime.getTime();
@@ -201,6 +251,9 @@ export default class SessionSheetManager {
     return this.ROOM_ROW + 1 + offsetRow;
   }
 
+  /**
+   * Highlight sessions that are marked as important in red border and background.
+   */
   public hightlightSessions(): void {
     this.importantSessions.forEach(session => {
       const start = new Date(session.start);
@@ -233,6 +286,10 @@ export default class SessionSheetManager {
     });
   }
 
+  /**
+   * Normalize border of spacing columns.
+   * Will draw black, SOLID_THICK border for spacing columns.
+   */
   public normalizeBorder(): void {
     this.spacingColumns.forEach(column => {
       const maxRow = this.sheet.getMaxRows();

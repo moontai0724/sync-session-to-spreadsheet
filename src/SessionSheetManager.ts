@@ -193,6 +193,11 @@ export default class SessionSheetManager {
         return;
 
       const column = this.roomColumnReferance[session.room];
+      if (!column) {
+        Logger.log("[ERROR] No column found for room %s", session.room);
+        return;
+      }
+
       const startRow = this.getRowIndexOfTime(session.start);
       const endRow = this.getRowIndexOfTime(session.end) - 1;
 

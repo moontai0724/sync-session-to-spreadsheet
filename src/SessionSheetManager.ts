@@ -213,6 +213,19 @@ export default class SessionSheetManager {
         .setLinkUrl(session.uri)
         .build();
 
+      const ranges = range.getMergedRanges();
+
+      if (ranges.length > 0) {
+        Logger.log(
+          "Error: Conflict! Target range %s have existing data!",
+          range
+            .getMergedRanges()
+            .map(r => r.getA1Notation())
+            .join(", "),
+        );
+        return;
+      }
+
       range
         .merge()
         .setRichTextValue(richValue)

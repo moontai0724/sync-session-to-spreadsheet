@@ -207,6 +207,12 @@ export default class SessionSheetManager {
         endRow - startRow + 1,
         1,
       );
+      Logger.log(
+        "Fill session title=%s, url=%s, target=%s",
+        session.zh.title,
+        session.uri,
+        range.getA1Notation(),
+      );
 
       const richValue = SpreadsheetApp.newRichTextValue()
         .setText(session.zh.title)
@@ -259,6 +265,7 @@ export default class SessionSheetManager {
    * by summary types of session in the track and find the most common type.
    */
   public setSessionType(): void {
+    Logger.log("Start set session type");
     for (const roomId in this.roomTypes) {
       const types = this.roomTypes[roomId];
       const typeAmount = types.reduce(
@@ -287,6 +294,14 @@ export default class SessionSheetManager {
         continue;
       }
 
+      Logger.log(
+        "Set type %s for room %s, column %s, target cell %s",
+        type.zh.name,
+        roomId,
+        typeColumn,
+        cellAboveRoom.getA1Notation(),
+      );
+
       cellAboveRoom.setValue(type.zh.name);
     }
   }
@@ -304,7 +319,7 @@ export default class SessionSheetManager {
     );
 
     Logger.log(
-      "Session time %s, base time %s, offset time %s, offset row %s",
+      "Get session time %s, base time %s, offset time %s, offset row %s",
       sessionTime.toLocaleString(),
       this.baseTime.toLocaleString(),
       offsetTime / 1000 / 60,
@@ -317,6 +332,7 @@ export default class SessionSheetManager {
    * Highlight sessions that are marked as important in red border and background.
    */
   public hightlightSessions(): void {
+    Logger.log("Start highlight sessions");
     this.importantSessions.forEach(session => {
       const start = new Date(session.start);
       if (start.toLocaleDateString() !== this.baseTime.toLocaleDateString())
@@ -331,6 +347,12 @@ export default class SessionSheetManager {
         column,
         endRow - startRow + 1,
         1,
+      );
+      Logger.log(
+        "Highlight session title=%s, url=%s, target=%s",
+        session.zh.title,
+        session.uri,
+        range.getA1Notation(),
       );
 
       range
@@ -353,20 +375,26 @@ export default class SessionSheetManager {
    * Will draw black, SOLID_THICK border for spacing columns.
    */
   public normalizeBorder(): void {
+    Logger.log("Start normalize border");
     this.spacingColumns.forEach(column => {
       const maxRow = this.sheet.getMaxRows();
-      this.sheet
-        .getRange(this.ROOM_ROW + 1, column, maxRow - this.ROOM_ROW, 1)
-        .setBorder(
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          "black",
-          SpreadsheetApp.BorderStyle.SOLID_THICK,
-        );
+      const range = this.sheet.getRange(
+        this.ROOM_ROW + 1,
+        column,
+        maxRow - this.ROOM_ROW,
+        1,
+      );
+      Logger.log("Normalize border for range %s", range.getA1Notation());
+      range.setBorder(
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        "black",
+        SpreadsheetApp.BorderStyle.SOLID_THICK,
+      );
     });
   }
 }

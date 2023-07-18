@@ -4,7 +4,7 @@ export default class SessionSheetManager {
    * Side effect: will read first row of time to be the base time to calculate where sessions are going to be put.
    * This only read hour of the time, this script is hour-based.
    */
-  public readonly TIME_COLUMN = 1;
+  public readonly TIME_END_COLUMN = 2;
   /**
    * Row index of room, starts from 1.
    * Side effect: will default the line after `ROOM_ROW` is the first empty line for data to write.
@@ -43,7 +43,7 @@ export default class SessionSheetManager {
     this.spacingColumns = this.getSpacingColumns();
     this.startHour = parseInt(
       this.sheet
-        .getRange(this.ROOM_ROW + 1, this.TIME_COLUMN)
+        .getRange(this.ROOM_ROW + 1, this.TIME_END_COLUMN - 1)
         .getDisplayValue()
         .split(":")[0],
       10,
@@ -75,10 +75,10 @@ export default class SessionSheetManager {
     // Set rooms
     sheet.insertRowsAfter(1, this.ROOM_ROW - 1);
     const roomIds = this.data.rooms.map(room => room.id);
-    sheet.insertColumnsAfter(1, roomIds.length);
+    sheet.insertColumnsAfter(1, this.TIME_END_COLUMN - 1 + roomIds.length);
     sheet
-      .getRange(this.ROOM_ROW, 1, 1, roomIds.length + 1)
-      .setValues([["時\\地", ...roomIds]]);
+      .getRange(this.ROOM_ROW, this.TIME_END_COLUMN - 1, 1, roomIds.length + 2)
+      .setValues([["開始", "結束", ...roomIds]]);
 
     // Set times
     const totalRows =
@@ -91,15 +91,22 @@ export default class SessionSheetManager {
         this.ROOM_ROW + 1 + (hour - this.startHour) * rowAmountOfHour;
       for (let i = 0; i < rowAmountOfHour; i++) {
         const rowIndex = baseRow + i;
-        const minute = (i * this.UNIT_TIME_MINUTE).toString().padStart(2, "0");
-        const time = `${hour}:${minute}`;
-        sheet.getRange(rowIndex, this.TIME_COLUMN).setValue(time);
+        const startMinute = (i * this.UNIT_TIME_MINUTE)
+          .toString()
+          .padStart(2, "0");
+        const startTime = `${hour}:${startMinute}`;
+        const endMinute = (i * this.UNIT_TIME_MINUTE + this.UNIT_TIME_MINUTE)
+          .toString()
+          .padStart(2, "0");
+        const endTime = `${hour}:${endMinute}`;
+        sheet.getRange(rowIndex, this.TIME_END_COLUMN - 1).setValue(startTime);
+        sheet.getRange(rowIndex, this.TIME_END_COLUMN).setValue(endTime);
       }
       const hourRange = sheet.getRange(
         baseRow,
-        this.TIME_COLUMN,
+        this.TIME_END_COLUMN - 1,
         rowAmountOfHour,
-        1,
+        2,
       );
       hourRange.setBorder(
         true,
@@ -114,9 +121,10 @@ export default class SessionSheetManager {
     }
 
     // Beautify sheet
-    sheet.setColumnWidth(this.TIME_COLUMN, 50);
+    sheet.setColumnWidth(this.TIME_END_COLUMN - 1, 50);
+    sheet.setColumnWidth(this.TIME_END_COLUMN, 50);
     sheet.setFrozenRows(this.ROOM_ROW);
-    sheet.setFrozenColumns(this.TIME_COLUMN);
+    sheet.setFrozenColumns(this.TIME_END_COLUMN);
     sheet
       .getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns())
       .setHorizontalAlignment("center")

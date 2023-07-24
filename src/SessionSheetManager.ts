@@ -44,6 +44,7 @@ export default class SessionSheetManager {
     this.startHour = parseInt(
       this.sheet
         .getRange(this.ROOM_ROW + 1, this.TIME_END_COLUMN - 1)
+        .activate()
         .getDisplayValue()
         .split(":")[0],
       10,
@@ -78,6 +79,7 @@ export default class SessionSheetManager {
     sheet.insertColumnsAfter(1, this.TIME_END_COLUMN - 1 + roomIds.length);
     sheet
       .getRange(this.ROOM_ROW, this.TIME_END_COLUMN - 1, 1, roomIds.length + 2)
+      .activate()
       .setValues([["開始", "結束", ...roomIds]]);
 
     // Set times
@@ -99,15 +101,18 @@ export default class SessionSheetManager {
           .toString()
           .padStart(2, "0");
         const endTime = `${hour}:${endMinute}`;
-        sheet.getRange(rowIndex, this.TIME_END_COLUMN - 1).setValue(startTime);
-        sheet.getRange(rowIndex, this.TIME_END_COLUMN).setValue(endTime);
+        sheet
+          .getRange(rowIndex, this.TIME_END_COLUMN - 1)
+          .setValue(startTime)
+          .activate();
+        sheet
+          .getRange(rowIndex, this.TIME_END_COLUMN)
+          .setValue(endTime)
+          .activate();
       }
-      const hourRange = sheet.getRange(
-        baseRow,
-        this.TIME_END_COLUMN - 1,
-        rowAmountOfHour,
-        2,
-      );
+      const hourRange = sheet
+        .getRange(baseRow, this.TIME_END_COLUMN - 1, rowAmountOfHour, 2)
+        .activate();
       hourRange.setBorder(
         true,
         true,
@@ -127,6 +132,7 @@ export default class SessionSheetManager {
     sheet.setFrozenColumns(this.TIME_END_COLUMN);
     sheet
       .getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns())
+      .activate()
       .setHorizontalAlignment("center")
       .setVerticalAlignment("middle")
       .setWrap(true);
@@ -143,6 +149,7 @@ export default class SessionSheetManager {
     const roomColumnReferance = roomIds.reduce((all, roomId) => {
       const matchCell = this.sheet
         .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
+        .activate()
         .createTextFinder(roomId)
         .matchEntireCell(true)
         .findNext();
@@ -164,6 +171,7 @@ export default class SessionSheetManager {
   public getSpacingColumns(): number[] {
     const spacingColumns = this.sheet
       .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
+      .activate()
       .createTextFinder("拍攝者")
       .findAll()
       .map(cell => cell.getColumn());
@@ -181,6 +189,7 @@ export default class SessionSheetManager {
       const maxRow = this.sheet.getMaxRows();
       this.sheet
         .getRange(this.ROOM_ROW + 1, column, maxRow - this.ROOM_ROW, 1)
+        .activate()
         .clear();
     }
   }
@@ -209,12 +218,9 @@ export default class SessionSheetManager {
       const startRow = this.getRowIndexOfTime(session.start);
       const endRow = this.getRowIndexOfTime(session.end) - 1;
 
-      const range = this.sheet.getRange(
-        startRow,
-        column,
-        endRow - startRow + 1,
-        1,
-      );
+      const range = this.sheet
+        .getRange(startRow, column, endRow - startRow + 1, 1)
+        .activate();
       Logger.log(
         "Fill session title=%s, url=%s, target=%s",
         session.zh.title,
@@ -292,7 +298,9 @@ export default class SessionSheetManager {
       if (!type) continue;
       const typeColumn = this.roomColumnReferance[roomId];
 
-      const cellAboveRoom = this.sheet.getRange(this.ROOM_ROW - 1, typeColumn);
+      const cellAboveRoom = this.sheet
+        .getRange(this.ROOM_ROW - 1, typeColumn)
+        .activate();
 
       if (cellAboveRoom.getDisplayValue() !== "") {
         Logger.log(
@@ -350,12 +358,9 @@ export default class SessionSheetManager {
       const startRow = this.getRowIndexOfTime(session.start);
       const endRow = this.getRowIndexOfTime(session.end) - 1;
 
-      const range = this.sheet.getRange(
-        startRow,
-        column,
-        endRow - startRow + 1,
-        1,
-      );
+      const range = this.sheet
+        .getRange(startRow, column, endRow - startRow + 1, 1)
+        .activate();
       Logger.log(
         "Highlight session title=%s, url=%s, target=%s",
         session.zh.title,
@@ -386,12 +391,9 @@ export default class SessionSheetManager {
     Logger.log("Start normalize border");
     this.spacingColumns.forEach(column => {
       const maxRow = this.sheet.getMaxRows();
-      const range = this.sheet.getRange(
-        this.ROOM_ROW + 1,
-        column,
-        maxRow - this.ROOM_ROW,
-        1,
-      );
+      const range = this.sheet
+        .getRange(this.ROOM_ROW + 1, column, maxRow - this.ROOM_ROW, 1)
+        .activate();
       Logger.log("Normalize border for range %s", range.getA1Notation());
       range.setBorder(
         true,

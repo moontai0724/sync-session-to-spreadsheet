@@ -233,20 +233,24 @@ export default class SessionSheetManager {
         .setLinkUrl(session.uri)
         .build();
 
-      const ranges = range.getMergedRanges();
+      // Following will cost too much time to execute in GAS
+      // Only enable when there are conflicts and you want to preserve the first result.
 
-      if (ranges.length > 0) {
-        Logger.log(
-          "Error: Conflict! Target range %s have existing data!",
-          range
-            .getMergedRanges()
-            .map(r => r.getA1Notation())
-            .join(", "),
-        );
-        return;
-      }
+      // const ranges = range.getMergedRanges();
+
+      // if (ranges.length > 0) {
+      //   Logger.log(
+      //     "Error: Conflict! Target range %s have existing data!",
+      //     range
+      //       .getMergedRanges()
+      //       .map(r => r.getA1Notation())
+      //       .join(", "),
+      //   );
+      //   return;
+      // }
 
       range
+        .clear()
         .merge()
         .setRichTextValue(richValue)
         .setHorizontalAlignment("center")

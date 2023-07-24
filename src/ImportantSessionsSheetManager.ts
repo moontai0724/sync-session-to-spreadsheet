@@ -99,6 +99,7 @@ export default class ImportantSessionsSheetManager {
    * @returns Sheet of created important sessions
    */
   private createSheet(): GoogleAppsScript.Spreadsheet.Sheet {
+    Logger.log(`Create sheet: ${this.SHEET_NAME}`);
     const sheet = this.spreadsheet.insertSheet(this.SHEET_NAME);
 
     const titles = this.SCHEMA.map(v => v.title);
@@ -144,9 +145,16 @@ export default class ImportantSessionsSheetManager {
    * @throws Error if session not found
    */
   public setDetails(session: EventSession): void {
+    Logger.log(`Set details of important session: ${session.id}`);
     const rowIndex = this.getRowIndex(session.id);
     this.SCHEMA.forEach((schema, index) => {
       const cell = this.sheet.getRange(rowIndex, index + 1, 1, 1);
+      Logger.log(
+        `Set details of important session @ %s: %s %s`,
+        cell.getA1Notation(),
+        session.id,
+        schema.title,
+      );
       schema.dataSetter(cell, session);
     });
   }

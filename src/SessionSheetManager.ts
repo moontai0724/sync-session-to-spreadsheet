@@ -169,12 +169,14 @@ export default class SessionSheetManager {
    * @returns An array of column index that is used for spacing.
    */
   public getSpacingColumns(): number[] {
+    Logger.log("Start get spacing columns");
     const spacingColumns = this.sheet
       .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
       .activate()
       .createTextFinder("拍攝者")
       .findAll()
       .map(cell => cell.getColumn());
+    Logger.log("Found spacing columns %s", spacingColumns);
 
     return spacingColumns;
   }
@@ -184,9 +186,16 @@ export default class SessionSheetManager {
    * Only clear those sessions columns that are identified in RoomColumnReferance.
    */
   public clearCurrentSessions(): void {
+    Logger.log("Start clear current sessions");
     const sessionColumns = Object.values(this.roomColumnReferance);
     for (const column of sessionColumns) {
       const maxRow = this.sheet.getMaxRows();
+      Logger.log(
+        "Clear column %s from row %s to %s",
+        column,
+        this.ROOM_ROW + 1,
+        maxRow,
+      );
       this.sheet
         .getRange(this.ROOM_ROW + 1, column, maxRow - this.ROOM_ROW, 1)
         .activate()
@@ -202,6 +211,7 @@ export default class SessionSheetManager {
    * Will hightlight sessions that are marked as important.
    */
   public fillData(): void {
+    Logger.log("Start fill data");
     this.clearCurrentSessions();
     this.data.sessions.forEach(session => {
       const start = new Date(session.start);

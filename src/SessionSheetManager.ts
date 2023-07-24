@@ -318,10 +318,11 @@ export default class SessionSheetManager {
 
       if (cellAboveRoom.getDisplayValue() !== "") {
         Logger.log(
-          "Warning: Cell above room %s is not empty to be filled with type, ignored to fill type.",
+          "Warning: Cell above room %s is not empty to be filled with type, force overwrite %s to %s.",
           roomId,
+          cellAboveRoom.getDisplayValue(),
+          type.zh.name,
         );
-        continue;
       }
 
       Logger.log(

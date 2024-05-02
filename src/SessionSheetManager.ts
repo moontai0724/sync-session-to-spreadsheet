@@ -228,6 +228,21 @@ export default class SessionSheetManager {
       const startRow = this.getRowIndexOfTime(session.start);
       const endRow = this.getRowIndexOfTime(session.end) - 1;
 
+      Logger.log(
+        "Processing: Session=%s, start=%s, end=%s, column=%s, startRow=%s, endRow=%s",
+        session.zh.title,
+        session.start,
+        session.end,
+        column,
+        startRow,
+        endRow,
+      );
+
+      if (endRow < startRow) {
+        Logger.log("[ERROR] Session end before start, skipping it.");
+        return;
+      }
+
       const range = this.sheet
         .getRange(startRow, column, endRow - startRow + 1, 1)
         .activate();

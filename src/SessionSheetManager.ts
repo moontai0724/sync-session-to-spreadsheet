@@ -283,7 +283,7 @@ export default class SessionSheetManager {
         .merge()
         .setRichTextValue(richValue)
         .setHorizontalAlignment("center")
-        .setVerticalAlignment("middle")
+        .setVerticalAlignment("top")
         .setWrap(true)
         .setBackground("#FDFDFD")
         .setBorder(

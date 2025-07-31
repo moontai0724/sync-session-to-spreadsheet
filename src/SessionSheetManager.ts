@@ -75,7 +75,7 @@ export default class SessionSheetManager {
 
     // Set rooms
     sheet.insertRowsAfter(1, this.ROOM_ROW - 1);
-    const roomIds = this.data.rooms.map(room => room.id);
+    const roomIds = this.data.rooms.map(room => room.zh.name);
     sheet.insertColumnsAfter(1, this.TIME_END_COLUMN - 1 + roomIds.length);
     sheet
       .getRange(this.ROOM_ROW, this.TIME_END_COLUMN - 1, 1, roomIds.length + 2)
@@ -145,19 +145,21 @@ export default class SessionSheetManager {
    * @returns A referance of room column, which is a map of room id to column index.
    */
   public getRoomColumnReferance(): Record<EventRoomId, number> {
-    const roomIds = this.data.rooms.map(room => room.id);
-    const roomColumnReferance = roomIds.reduce((all, roomId) => {
-      const matchCell = this.sheet
-        .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
-        .activate()
-        .createTextFinder(roomId)
-        .matchEntireCell(true)
-        .findNext();
-      if (!matchCell) return all;
+    const roomColumnReferance = this.data.rooms.reduce(
+      (all, { id: roomId, zh: { name: roomName } }) => {
+        const matchCell = this.sheet
+          .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
+          .activate()
+          .createTextFinder(roomName)
+          .matchEntireCell(true)
+          .findNext();
+        if (!matchCell) return all;
 
-      const columnIndex = matchCell.getColumn();
-      return { ...all, [roomId]: columnIndex };
-    }, {});
+        const columnIndex = matchCell.getColumn();
+        return { ...all, [roomId]: columnIndex };
+      },
+      {},
+    );
 
     return roomColumnReferance;
   }

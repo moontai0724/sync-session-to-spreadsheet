@@ -11,5 +11,6 @@ interface ColumnSchema {
   dataSetter: (
     cell: GoogleAppsScript.Spreadsheet.Range,
     session: EventSession,
+    data: EventData,
   ) => void;
 }

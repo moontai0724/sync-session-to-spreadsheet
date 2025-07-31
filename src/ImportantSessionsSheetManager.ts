@@ -36,8 +36,12 @@ export default class ImportantSessionsSheetManager {
       dataSetter: (
         cell: GoogleAppsScript.Spreadsheet.Range,
         session: EventSession,
+        data: EventData,
       ): void => {
-        cell.setValue(session.room);
+        cell.setValue(
+          data.rooms.find(room => room.id === session.room)?.zh.name ??
+            session.room,
+        );
       },
     },
     {
@@ -91,7 +95,7 @@ export default class ImportantSessionsSheetManager {
     this.sessions = data.sessions.filter(session =>
       sessionIds.includes(session.id),
     );
-    this.sessions.forEach(session => this.setDetails(session));
+    this.sessions.forEach(session => this.setDetails(session, data));
   }
 
   /**
@@ -144,7 +148,7 @@ export default class ImportantSessionsSheetManager {
    * @param session session to be set
    * @throws Error if session not found
    */
-  public setDetails(session: EventSession): void {
+  public setDetails(session: EventSession, data: EventData): void {
     Logger.log(`Set details of important session: ${session.id}`);
     const rowIndex = this.getRowIndex(session.id);
     this.SCHEMA.forEach((schema, index) => {
@@ -155,7 +159,7 @@ export default class ImportantSessionsSheetManager {
         session.id,
         schema.title,
       );
-      schema.dataSetter(cell, session);
+      schema.dataSetter(cell, session, data);
     });
   }
 

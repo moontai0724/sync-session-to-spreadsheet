@@ -1,3 +1,5 @@
+type Important = "Primary" | "Notice" | "Ignore";
+
 export default class ImportantSessionsSheetManager {
   /** Sheet name of important sessions, will auto create when construct if not exists. */
   public readonly SHEET_NAME = "重要議程";
@@ -19,6 +21,11 @@ export default class ImportantSessionsSheetManager {
 
         cell.setRichTextValue(richValue);
       },
+    },
+    {
+      title: "標記類別",
+      width: 100,
+      dataSetter: (): void => void 0,
     },
     {
       title: "名稱",
@@ -174,5 +181,66 @@ export default class ImportantSessionsSheetManager {
     const rowIndex = column.createTextFinder(sessionId).findNext()?.getRow();
     if (!rowIndex) throw new Error(`ImportantSession: ${sessionId} not found`);
     return rowIndex;
+  }
+
+  public getImportance(session: EventSession): Important {
+    const rowIndex = this.getRowIndex(session.id);
+    const importanceCell = this.sheet.getRange(rowIndex, 2);
+
+    if (importanceCell.getValue() === "Primary") return "Primary";
+    if (importanceCell.getValue() === "Notice") return "Notice";
+
+    return "Ignore";
+  }
+
+  public setImportance(
+    range: GoogleAppsScript.Spreadsheet.Range,
+    session: EventSession,
+  ): void {
+    const importanceMap: Record<
+      Important,
+      (range: GoogleAppsScript.Spreadsheet.Range) => void
+    > = {
+      Primary: this.setPrimary,
+      Notice: this.setNotice,
+      Ignore: this.setIgnore,
+    };
+    const importance = this.getImportance(session);
+
+    return importanceMap[importance](range);
+  }
+
+  public setPrimary(range: GoogleAppsScript.Spreadsheet.Range): void {
+    range
+      .setBackground("#F4CCCC")
+      .setBorder(
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        "black",
+        SpreadsheetApp.BorderStyle.SOLID_THICK,
+      );
+  }
+
+  public setNotice(range: GoogleAppsScript.Spreadsheet.Range): void {
+    range
+      .setBackground("#FFFF99")
+      .setBorder(
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        "#FFCC33",
+        SpreadsheetApp.BorderStyle.SOLID_THICK,
+      );
+  }
+
+  public setIgnore(range: GoogleAppsScript.Spreadsheet.Range): void {
+    range.setBackground("#D3D3D3");
   }
 }

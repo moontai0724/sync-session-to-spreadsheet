@@ -19,7 +19,7 @@ global.entrypoint = function (): void {
       `Day ${index + 1} (${date})`,
       date,
       dataManager.data,
-      importantSessionsSheet.sessions,
+      importantSessionsSheet,
       dataManager.startHour,
       dataManager.endHour,
     );

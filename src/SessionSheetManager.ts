@@ -1,3 +1,5 @@
+import type ImportantSessionsSheetManager from "./ImportantSessionsSheetManager";
+
 export default class SessionSheetManager {
   /**
    * Column index of time, starts from 1.
@@ -24,7 +26,7 @@ export default class SessionSheetManager {
    * @param sheetName Name of the sheet to be interact, can be a non-exist sheet, will auto create if so.
    * @param date Date of the event in this sheet, in format that parsable by `Date` object.
    * @param data Data of complete event.
-   * @param importantSessions Important sessions that will be highlighted in red border and background.
+   * @param importantSessionManager Important sessions that will be highlighted in border and background.
    * @param startHour The first hour of this event, only used for create sheet, will be auto overwitten by the first row of time if the sheet already exists.
    * @param endHour The end hour of this sheet, is important when sheet is empty, no usage if sheet is not empty.
    */
@@ -32,7 +34,7 @@ export default class SessionSheetManager {
     public sheetName: string,
     public date: string,
     public data: EventData,
-    public importantSessions: EventSession[] = [],
+    public importantSessionManager: ImportantSessionsSheetManager,
     public startHour: number = 0,
     public endHour: number = 24,
   ) {
@@ -381,7 +383,7 @@ export default class SessionSheetManager {
    */
   public hightlightSessions(): void {
     Logger.log("Start highlight sessions");
-    this.importantSessions.forEach(session => {
+    this.importantSessionManager.sessions.forEach(session => {
       const start = new Date(session.start);
       if (start.toLocaleDateString() !== this.baseTime.toLocaleDateString())
         return;
@@ -400,18 +402,7 @@ export default class SessionSheetManager {
         range.getA1Notation(),
       );
 
-      range
-        .setBackground("#F4CCCC")
-        .setBorder(
-          true,
-          true,
-          true,
-          true,
-          false,
-          false,
-          "red",
-          SpreadsheetApp.BorderStyle.SOLID_THICK,
-        );
+      this.importantSessionManager.setImportance(range, session);
     });
   }
 

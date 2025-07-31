@@ -12,8 +12,8 @@ You can configure some variables to match your need.
 Just setup config and simply generate and copy-paste `dist/Code.gs` file content into apps script.
 
 ```shell=
-cp config.example.js config.js 
-yarn build
+cp config.example.js config.js
+npm run build
 ```
 
 If you want to change any config, just change it directly, then rebuild and copy-paste. Variables are already going with comments.

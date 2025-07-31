@@ -56,12 +56,12 @@ export default class ImportantSessionsSheetManager {
         const startTime = start.toLocaleTimeString("zh-TW", {
           hour: "2-digit",
           minute: "2-digit",
-          hourCycle: "h24",
+          hour12: false,
         });
         const endTime = end.toLocaleTimeString("zh-TW", {
           hour: "2-digit",
           minute: "2-digit",
-          hourCycle: "h24",
+          hour12: false,
         });
         const time = `${startTime} ~ ${endTime}`;
         cell.setValue(`${date} ${time}`);

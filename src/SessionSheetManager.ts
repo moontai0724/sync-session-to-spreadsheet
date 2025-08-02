@@ -1,3 +1,4 @@
+import ENVIRONMENT from "../config";
 import type ImportantSessionsSheetManager from "./ImportantSessionsSheetManager";
 
 export default class SessionSheetManager {
@@ -250,16 +251,17 @@ export default class SessionSheetManager {
       const range = this.sheet
         .getRange(startRow, column, endRow - startRow + 1, 1)
         .activate();
+      const uri = session.uri ?? `${ENVIRONMENT.URI_BASE}${session.id}/`;
       Logger.log(
         "Fill session title=%s, url=%s, target=%s",
         session.zh.title,
-        session.uri,
+        uri,
         range.getA1Notation(),
       );
 
       const richValue = SpreadsheetApp.newRichTextValue()
         .setText(session.zh.title)
-        .setLinkUrl(session.uri)
+        .setLinkUrl(uri)
         .build();
 
       // Following will cost too much time to execute in GAS

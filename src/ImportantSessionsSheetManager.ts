@@ -1,3 +1,5 @@
+import ENVIRONMENT from "../config";
+
 type Important = "Primary" | "Notice" | "Ignore";
 
 export default class ImportantSessionsSheetManager {
@@ -16,7 +18,7 @@ export default class ImportantSessionsSheetManager {
       ): void => {
         const richValue = SpreadsheetApp.newRichTextValue()
           .setText(session.id)
-          .setLinkUrl(session.uri)
+          .setLinkUrl(`${ENVIRONMENT.URI_BASE}${session.id}/`)
           .build();
 
         cell.setRichTextValue(richValue);
@@ -34,7 +36,7 @@ export default class ImportantSessionsSheetManager {
         cell: GoogleAppsScript.Spreadsheet.Range,
         session: EventSession,
       ): void => {
-        cell.setValue(session.zh.title);
+        cell.setValue(session.title_zh);
       },
     },
     {
@@ -43,12 +45,8 @@ export default class ImportantSessionsSheetManager {
       dataSetter: (
         cell: GoogleAppsScript.Spreadsheet.Range,
         session: EventSession,
-        data: EventData,
       ): void => {
-        cell.setValue(
-          data.rooms.find(room => room.id === session.room)?.zh.name ??
-            session.room,
-        );
+        cell.setValue(session.room);
       },
     },
     {
@@ -86,22 +84,12 @@ export default class ImportantSessionsSheetManager {
   /**
    * @param data Data to be used for fill-in session infos
    */
-  public constructor(
-    data: EventData = {
-      sessions: [],
-      speakers: [],
-      session_types: [],
-      rooms: [],
-      tags: [],
-    },
-  ) {
+  public constructor(data: EventData = []) {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = this.spreadsheet.getSheetByName(this.SHEET_NAME);
     this.sheet = sheet ?? this.createSheet();
     const sessionIds = this.getIdColumn().getValues().flat().filter(Boolean);
-    this.sessions = data.sessions.filter(session =>
-      sessionIds.includes(session.id),
-    );
+    this.sessions = data.filter(session => sessionIds.includes(session.id));
     this.sessions.forEach(session => this.setDetails(session, data));
   }
 

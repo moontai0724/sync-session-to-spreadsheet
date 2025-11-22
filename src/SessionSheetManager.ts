@@ -21,7 +21,6 @@ export default class SessionSheetManager {
   public roomColumnReferance: Record<EventRoomId, number>;
   public spacingColumns: number[];
   public baseTime: Date;
-  public roomTypes: Record<EventRoomId, EventSessionTypeId[]> = {};
 
   /**
    * @param sheetName Name of the sheet to be interact, can be a non-exist sheet, will auto create if so.
@@ -78,7 +77,12 @@ export default class SessionSheetManager {
 
     // Set rooms
     sheet.insertRowsAfter(1, this.ROOM_ROW - 1);
-    const roomIds = this.data.rooms.map(room => room.zh.name);
+    const roomIds = Array.from(
+      this.data.reduce((set, session) => {
+        set.add(session.room);
+        return set;
+      }, new Set<string>()),
+    );
     sheet.insertColumnsAfter(1, this.TIME_END_COLUMN - 1 + roomIds.length);
     sheet
       .getRange(this.ROOM_ROW, this.TIME_END_COLUMN - 1, 1, roomIds.length + 2)
@@ -148,21 +152,23 @@ export default class SessionSheetManager {
    * @returns A referance of room column, which is a map of room id to column index.
    */
   public getRoomColumnReferance(): Record<EventRoomId, number> {
-    const roomColumnReferance = this.data.rooms.reduce(
-      (all, { id: roomId, zh: { name: roomName } }) => {
-        const matchCell = this.sheet
-          .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
-          .activate()
-          .createTextFinder(roomName)
-          .matchEntireCell(true)
-          .findNext();
-        if (!matchCell) return all;
+    const roomColumnReferance = Array.from(
+      this.data.reduce((set, session) => {
+        set.add(session.room);
+        return set;
+      }, new Set<string>()),
+    ).reduce((all, roomName) => {
+      const matchCell = this.sheet
+        .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
+        .activate()
+        .createTextFinder(roomName)
+        .matchEntireCell(true)
+        .findNext();
+      if (!matchCell) return all;
 
-        const columnIndex = matchCell.getColumn();
-        return { ...all, [roomId]: columnIndex };
-      },
-      {},
-    );
+      const columnIndex = matchCell.getColumn();
+      return { ...all, [roomName]: columnIndex };
+    }, {});
 
     return roomColumnReferance;
   }
@@ -218,7 +224,7 @@ export default class SessionSheetManager {
   public fillData(): void {
     Logger.log("Start fill data");
     this.clearCurrentSessions();
-    this.data.sessions.forEach(session => {
+    this.data.forEach(session => {
       const start = new Date(session.start);
 
       if (start.toLocaleDateString() !== this.baseTime.toLocaleDateString())
@@ -235,7 +241,7 @@ export default class SessionSheetManager {
 
       Logger.log(
         "Processing: Session=%s, start=%s, end=%s, column=%s, startRow=%s, endRow=%s",
-        session.zh.title,
+        session.title_zh,
         session.start,
         session.end,
         column,
@@ -251,16 +257,16 @@ export default class SessionSheetManager {
       const range = this.sheet
         .getRange(startRow, column, endRow - startRow + 1, 1)
         .activate();
-      const uri = session.uri ?? `${ENVIRONMENT.URI_BASE}${session.id}/`;
+      const uri = `${ENVIRONMENT.URI_BASE}${session.id}/`;
       Logger.log(
         "Fill session title=%s, url=%s, target=%s",
-        session.zh.title,
+        session.title_zh,
         uri,
         range.getA1Notation(),
       );
 
       const richValue = SpreadsheetApp.newRichTextValue()
-        .setText(session.zh.title)
+        .setText(session.title_zh)
         .setLinkUrl(uri)
         .build();
 
@@ -298,64 +304,9 @@ export default class SessionSheetManager {
           "black",
           SpreadsheetApp.BorderStyle.SOLID,
         );
-
-      this.roomTypes[session.room] = [
-        ...(this.roomTypes[session.room] ?? []),
-        session.type,
-      ];
     });
-    this.setSessionType();
     this.hightlightSessions();
     this.normalizeBorder();
-  }
-
-  /**
-   * Set a type for each session track (column) above row of room
-   * by summary types of session in the track and find the most common type.
-   */
-  public setSessionType(): void {
-    Logger.log("Start set session type");
-    for (const roomId in this.roomTypes) {
-      const types = this.roomTypes[roomId];
-      const typeAmount = types.reduce(
-        (all: Record<string, number>, value) => ({
-          ...all,
-          [value]: (all[value] ?? 0) + 1,
-        }),
-        {},
-      );
-      const maxAmount = Math.max(...Object.values(typeAmount));
-      const typeId = Array.from(Object.entries(typeAmount)).find(
-        current => current[1] === maxAmount,
-      )?.[0];
-      if (!typeId) continue;
-      const type = this.data.session_types.find(type => type.id === typeId);
-      if (!type) continue;
-      const typeColumn = this.roomColumnReferance[roomId];
-
-      const cellAboveRoom = this.sheet
-        .getRange(this.ROOM_ROW - 1, typeColumn)
-        .activate();
-
-      if (cellAboveRoom.getDisplayValue() !== "") {
-        Logger.log(
-          "Warning: Cell above room %s is not empty to be filled with type, force overwrite %s to %s.",
-          roomId,
-          cellAboveRoom.getDisplayValue(),
-          type.zh.name,
-        );
-      }
-
-      Logger.log(
-        "Set type %s for room %s, column %s, target cell %s",
-        type.zh.name,
-        roomId,
-        typeColumn,
-        cellAboveRoom.getA1Notation(),
-      );
-
-      cellAboveRoom.setValue(type.zh.name);
-    }
   }
 
   /**
@@ -399,8 +350,8 @@ export default class SessionSheetManager {
         .activate();
       Logger.log(
         "Highlight session title=%s, url=%s, target=%s",
-        session.zh.title,
-        session.uri,
+        session.title_zh,
+        `${ENVIRONMENT.URI_BASE}${session.id}/`,
         range.getA1Notation(),
       );
 

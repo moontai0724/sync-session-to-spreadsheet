@@ -4,13 +4,14 @@ export default class DataManager {
   public startHour: number;
   public endHour: number;
   public dates: string[];
+  public rooms: EventRoom[];
 
   /**
    * @param sourceUrl url of the raw data, should in specific format (which is usable by OPass)
    */
   public constructor(public sourceUrl: string) {
     this.data = this.fetch();
-    this.data.rooms = this.getActiveRooms();
+    this.rooms = this.getActiveRooms();
     const [startHour, endHour] = this.getHourRange();
     this.startHour = startHour;
     this.endHour = endHour;
@@ -29,13 +30,10 @@ export default class DataManager {
    */
   public getActiveRooms(): EventRoom[] {
     const realRoomIds = Array.from(
-      new Set(this.data.sessions.map(session => session.room).sort()),
+      new Set(this.data.map(session => session.room).sort()),
     );
-    const rooms = realRoomIds
-      .map(roomId => this.data.rooms.find(room => room.id === roomId))
-      .filter(Boolean) as EventRoom[];
 
-    return rooms;
+    return realRoomIds.map(id => ({ id, zh: { name: id }, en: { name: id } }));
   }
 
   /**
@@ -46,7 +44,7 @@ export default class DataManager {
     let min = 24;
     let max = 0;
 
-    this.data.sessions.forEach(session => {
+    this.data.forEach(session => {
       const start = new Date(session.start).getHours();
       if (start < min) {
         min = start;
@@ -68,7 +66,7 @@ export default class DataManager {
   public getDates(): string[] {
     const dates = Array.from(
       new Set(
-        this.data.sessions.map(session => {
+        this.data.map(session => {
           const date = new Date(session.start);
           const dateString = date.toLocaleDateString("zh-TW", {
             year: "numeric",

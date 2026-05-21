@@ -16,7 +16,7 @@ global.entrypoint = function (): void {
   dataManager.dates.forEach((date, index) => {
     Logger.log("Init Day %s (%s)", index + 1, date);
     const sessionSheet = new SessionSheetManager(
-      `Day ${index + 1} (${date})`,
+      index + 1,
       date,
       dataManager.data,
       importantSessionsSheet,

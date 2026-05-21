@@ -16,6 +16,7 @@ export default class SessionSheetManager {
   public readonly ROOM_ROW = 3;
   /** A unit time in minute, will used for init sheet and calculate where sessions are going to be put. */
   public readonly UNIT_TIME_MINUTE = 10;
+  public sheetName;
   public spreadsheet;
   public sheet;
   public roomColumnReferance: Record<EventRoomId, number>;
@@ -24,7 +25,7 @@ export default class SessionSheetManager {
   public roomTypes: Record<EventRoomId, EventSessionTypeId[]> = {};
 
   /**
-   * @param sheetName Name of the sheet to be interact, can be a non-exist sheet, will auto create if so.
+   * @param day Day of the event in this sheet.
    * @param date Date of the event in this sheet, in format that parsable by `Date` object.
    * @param data Data of complete event.
    * @param importantSessionManager Important sessions that will be highlighted in border and background.
@@ -32,13 +33,14 @@ export default class SessionSheetManager {
    * @param endHour The end hour of this sheet, is important when sheet is empty, no usage if sheet is not empty.
    */
   public constructor(
-    public sheetName: string,
+    public day: number,
     public date: string,
     public data: EventData,
     public importantSessionManager: ImportantSessionsSheetManager,
     public startHour: number = 0,
     public endHour: number = 24,
   ) {
+    this.sheetName = `Day ${day} (${date})`;
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = this.spreadsheet.getSheetByName(this.sheetName);
     this.sheet = sheet ?? this.createSheet();
@@ -251,7 +253,11 @@ export default class SessionSheetManager {
       const range = this.sheet
         .getRange(startRow, column, endRow - startRow + 1, 1)
         .activate();
-      const uri = session.uri ?? `${ENVIRONMENT.URI_BASE}${session.id}/`;
+      const uri =
+        session.uri ?? ENVIRONMENT.URI_CONTAINS_DAY
+          ? `${ENVIRONMENT.URI_BASE}${this.day}/${ENVIRONMENT.ID_PREFIX}${session.id}`
+          : `${ENVIRONMENT.URI_BASE}${ENVIRONMENT.ID_PREFIX}${session.id}/`;
+
       Logger.log(
         "Fill session title=%s, url=%s, target=%s",
         session.zh.title,

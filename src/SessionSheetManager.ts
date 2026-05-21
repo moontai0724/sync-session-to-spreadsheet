@@ -220,6 +220,10 @@ export default class SessionSheetManager {
   public fillData(): void {
     Logger.log("Start fill data");
     this.clearCurrentSessions();
+    const speakerMap = this.data.speakers.reduce(
+      (all, speaker) => ({ ...all, [speaker.id]: speaker }),
+      {} as Record<EventSpeakerId, EventSpeaker>,
+    );
     this.data.sessions.forEach(session => {
       const start = new Date(session.start);
 
@@ -258,15 +262,24 @@ export default class SessionSheetManager {
           ? `${ENVIRONMENT.URI_BASE}${this.day}/${ENVIRONMENT.ID_PREFIX}${session.id}`
           : `${ENVIRONMENT.URI_BASE}${ENVIRONMENT.ID_PREFIX}${session.id}/`;
 
+      const title = [
+        session.zh.title,
+        "by",
+        `[${session.speakers.length}]`,
+        session.speakers
+          .map(speakerId => speakerMap[speakerId].zh.name)
+          .join("、"),
+      ].join(" ");
+
       Logger.log(
         "Fill session title=%s, url=%s, target=%s",
-        session.zh.title,
+        title,
         uri,
         range.getA1Notation(),
       );
 
       const richValue = SpreadsheetApp.newRichTextValue()
-        .setText(session.zh.title)
+        .setText(title)
         .setLinkUrl(uri)
         .build();
 

@@ -215,7 +215,7 @@ export default class SessionSheetManager {
    * Will cleare current sessions first.
    * Will fill sessions data into sheet.
    * Will draw black border for spacing columns.
-   * Will hightlight sessions that are marked as important.
+   * Will highlight sessions that are marked as important.
    */
   public fillData(): void {
     Logger.log("Start fill data");
@@ -311,7 +311,7 @@ export default class SessionSheetManager {
       ];
     });
     this.setSessionType();
-    this.hightlightSessions();
+    this.highlightSessions();
     this.normalizeBorder();
   }
 
@@ -389,7 +389,7 @@ export default class SessionSheetManager {
   /**
    * Highlight sessions that are marked as important in red border and background.
    */
-  public hightlightSessions(): void {
+  public highlightSessions(): void {
     Logger.log("Start highlight sessions");
     this.importantSessionManager.sessions.forEach(session => {
       const start = new Date(session.start);

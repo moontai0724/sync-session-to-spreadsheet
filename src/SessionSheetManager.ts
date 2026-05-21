@@ -15,7 +15,7 @@ export default class SessionSheetManager {
    */
   public readonly ROOM_ROW = 3;
   /** A unit time in minute, will used for init sheet and calculate where sessions are going to be put. */
-  public readonly UNIT_TIME_MINUTE = 5;
+  public readonly UNIT_TIME_MINUTE = 10;
   public spreadsheet;
   public sheet;
   public roomColumnReferance: Record<EventRoomId, number>;

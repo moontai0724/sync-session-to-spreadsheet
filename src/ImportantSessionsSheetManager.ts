@@ -174,7 +174,7 @@ export default class ImportantSessionsSheetManager {
    * Get row index of session by id.
    * @param sessionId id of the session to be found
    * @throws Error if session not found
-   * @returns ㄙrow index of session
+   * @returns row index of session
    */
   public getRowIndex(sessionId: string): number {
     const column = this.getIdColumn();

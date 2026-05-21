@@ -18,9 +18,9 @@ export default class DataManager {
   }
 
   public fetch(): EventData {
-    const responsedText = UrlFetchApp.fetch(this.sourceUrl).getContentText();
+    const respondedText = UrlFetchApp.fetch(this.sourceUrl).getContentText();
 
-    return JSON.parse(responsedText) as EventData;
+    return JSON.parse(respondedText) as EventData;
   }
 
   /**

@@ -29,7 +29,7 @@ export default class SessionSheetManager {
    * @param date Date of the event in this sheet, in format that parsable by `Date` object.
    * @param data Data of complete event.
    * @param importantSessionManager Important sessions that will be highlighted in border and background.
-   * @param startHour The first hour of this event, only used for create sheet, will be auto overwitten by the first row of time if the sheet already exists.
+   * @param startHour The first hour of this event, only used for create sheet, will be auto overwritten by the first row of time if the sheet already exists.
    * @param endHour The end hour of this sheet, is important when sheet is empty, no usage if sheet is not empty.
    */
   public constructor(
@@ -171,7 +171,7 @@ export default class SessionSheetManager {
 
   /**
    * Get spacing columns.
-   * If a column titled with keyword "拍攝者" that will be a spaceing column.
+   * If a column titled with keyword "拍攝者" that will be a spacing column.
    * Will draw a black border for spacing columns later.
    * @returns An array of column index that is used for spacing.
    */
@@ -212,7 +212,7 @@ export default class SessionSheetManager {
 
   /**
    * Fill sessions data into sheet.
-   * Will cleare current sessions first.
+   * Will clear current sessions first.
    * Will fill sessions data into sheet.
    * Will draw black border for spacing columns.
    * Will highlight sessions that are marked as important.

@@ -235,12 +235,12 @@ export default class ImportantSessionsSheetManager {
         true,
         true,
         true,
-        "black",
+        "#FFCC33",
         SpreadsheetApp.BorderStyle.SOLID_THICK,
       );
   }
 
   public setIgnore(range: GoogleAppsScript.Spreadsheet.Range): void {
-    range.setBackground("#F3F3F3");
+    range.setBackground("#D3D3D3");
   }
 }

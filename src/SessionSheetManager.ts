@@ -19,7 +19,7 @@ export default class SessionSheetManager {
   public sheetName;
   public spreadsheet;
   public sheet;
-  public roomColumnReferance: Record<EventRoomId, number>;
+  public roomColumnReference: Record<EventRoomId, number>;
   public spacingColumns: number[];
   public baseTime: Date;
   public roomTypes: Record<EventRoomId, EventSessionTypeId[]> = {};
@@ -44,7 +44,7 @@ export default class SessionSheetManager {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = this.spreadsheet.getSheetByName(this.sheetName);
     this.sheet = sheet ?? this.createSheet();
-    this.roomColumnReferance = this.getRoomColumnReferance();
+    this.roomColumnReference = this.getRoomColumnReference();
     this.spacingColumns = this.getSpacingColumns();
     this.startHour = parseInt(
       this.sheet
@@ -56,9 +56,9 @@ export default class SessionSheetManager {
     );
     this.baseTime = new Date(this.date + " " + this.startHour + ":00");
     Logger.log(
-      "Sheet %s by referanced %s spacing by %s from %s to %s, base time is %s",
+      "Sheet %s by referenced %s spacing by %s from %s to %s, base time is %s",
       this.sheetName,
-      this.roomColumnReferance,
+      this.roomColumnReference,
       this.spacingColumns,
       this.startHour,
       this.endHour,
@@ -146,11 +146,11 @@ export default class SessionSheetManager {
   }
 
   /**
-   * Summary and find referance between room and column index.
-   * @returns A referance of room column, which is a map of room id to column index.
+   * Summary and find reference between room and column index.
+   * @returns A reference of room column, which is a map of room id to column index.
    */
-  public getRoomColumnReferance(): Record<EventRoomId, number> {
-    const roomColumnReferance = this.data.rooms.reduce(
+  public getRoomColumnReference(): Record<EventRoomId, number> {
+    const roomColumnReference = this.data.rooms.reduce(
       (all, { id: roomId, zh: { name: roomName } }) => {
         const matchCell = this.sheet
           .getRange(this.ROOM_ROW, 1, 1, this.sheet.getMaxColumns())
@@ -166,7 +166,7 @@ export default class SessionSheetManager {
       {},
     );
 
-    return roomColumnReferance;
+    return roomColumnReference;
   }
 
   /**
@@ -190,11 +190,11 @@ export default class SessionSheetManager {
 
   /**
    * Clear current existing sessions in this sheet.
-   * Only clear those sessions columns that are identified in RoomColumnReferance.
+   * Only clear those sessions columns that are identified in RoomColumnReference.
    */
   public clearCurrentSessions(): void {
     Logger.log("Start clear current sessions");
-    const sessionColumns = Object.values(this.roomColumnReferance);
+    const sessionColumns = Object.values(this.roomColumnReference);
     for (const column of sessionColumns) {
       const maxRow = this.sheet.getMaxRows();
       Logger.log(
@@ -226,7 +226,7 @@ export default class SessionSheetManager {
       if (start.toLocaleDateString() !== this.baseTime.toLocaleDateString())
         return;
 
-      const column = this.roomColumnReferance[session.room];
+      const column = this.roomColumnReference[session.room];
       if (!column) {
         Logger.log("[ERROR] No column found for room %s", session.room);
         return;
@@ -337,7 +337,7 @@ export default class SessionSheetManager {
       if (!typeId) continue;
       const type = this.data.session_types.find(type => type.id === typeId);
       if (!type) continue;
-      const typeColumn = this.roomColumnReferance[roomId];
+      const typeColumn = this.roomColumnReference[roomId];
 
       const cellAboveRoom = this.sheet
         .getRange(this.ROOM_ROW - 1, typeColumn)
@@ -396,7 +396,7 @@ export default class SessionSheetManager {
       if (start.toLocaleDateString() !== this.baseTime.toLocaleDateString())
         return;
 
-      const column = this.roomColumnReferance[session.room];
+      const column = this.roomColumnReference[session.room];
       const startRow = this.getRowIndexOfTime(session.start);
       const endRow = this.getRowIndexOfTime(session.end) - 1;
 

@@ -69,6 +69,12 @@ export default class DataManager {
     const dates = Array.from(
       new Set(
         this.data.sessions.map(session => {
+          if (!session.start) {
+            Logger.log(
+              `WARN: Session ${session.id} has no start time, skip it.`,
+            );
+            return null;
+          }
           const date = new Date(session.start);
           const dateString = date.toLocaleDateString("zh-TW", {
             year: "numeric",
@@ -79,12 +85,14 @@ export default class DataManager {
           return dateString;
         }),
       ),
-    ).sort((date1, date2) => {
-      const date1Date = new Date(date1);
-      const date2Date = new Date(date2);
+    )
+      .filter((v): v is string => !!v)
+      .sort((date1, date2) => {
+        const date1Date = new Date(date1);
+        const date2Date = new Date(date2);
 
-      return date1Date.getTime() - date2Date.getTime();
-    });
+        return date1Date.getTime() - date2Date.getTime();
+      });
 
     return dates;
   }

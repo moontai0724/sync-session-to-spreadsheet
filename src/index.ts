@@ -1,28 +1,23 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { SessionManager } from "./session-manager";
 import ENVIRONMENT from "../config";
-import ImportantSessionsSheetManager from "./ImportantSessionsSheetManager";
-import DataManager from "./DataManager";
-import SessionSheetManager from "./SessionSheetManager";
 
 global.entrypoint = function (): void {
-  const dataManager = new DataManager(ENVIRONMENT.DATA_SOURCE);
-  const importantSessionsSheet = new ImportantSessionsSheetManager(
-    dataManager.data,
-  );
-  Logger.log("Dates: %s", dataManager.dates);
-  Logger.log("Start: %s", dataManager.startHour);
-  Logger.log("End: %s", dataManager.endHour);
+  const eventData = JSON.parse(
+    UrlFetchApp.fetch(ENVIRONMENT.DATA_SOURCE).getContentText(),
+  ) as EventData;
+  const sessionManager = new SessionManager(eventData);
+  Logger.log("Dates: %s", sessionManager.dates);
 
-  dataManager.dates.forEach((date, index) => {
-    Logger.log("Init Day %s (%s)", index + 1, date);
-    const sessionSheet = new SessionSheetManager(
-      index + 1,
-      date,
-      dataManager.data,
-      importantSessionsSheet,
-      dataManager.startHour,
-      dataManager.endHour,
-    );
-    sessionSheet.fillData();
-  });
+  Object.entries(sessionManager.sessionsByDate).forEach(
+    ([date, dailySessionManager], day) => {
+      Logger.log(
+        "Day %d: Date: %s, Sessions: %d, Starts at: %s, Ends at: %s",
+        day + 1,
+        date,
+        dailySessionManager.sessions.length,
+        dailySessionManager.startsAt.toISOString(),
+        dailySessionManager.endsAt.toISOString(),
+      );
+    },
+  );
 };

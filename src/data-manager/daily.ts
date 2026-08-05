@@ -1,13 +1,14 @@
-import { Session } from "../session";
+import type { Session } from "./session";
 
 export class DailySessionManager {
-  public sessions: Session[] = [];
+  public readonly sessions: Session[] = [];
   public startsAt!: Date;
   public endsAt!: Date;
 
-  public activeRooms: Map<EventRoomId, EventRoom> = new Map();
-  public activeSpeakers: Map<EventSpeakerId, EventSpeaker> = new Map();
-  public activeTypes: Map<EventSessionTypeId, EventSessionType> = new Map();
+  public readonly activeRooms: Map<EventRoomId, EventRoom> = new Map();
+  public readonly activeSpeakers: Map<EventSpeakerId, EventSpeaker> = new Map();
+  public readonly activeTypes: Map<EventSessionTypeId, EventSessionType> =
+    new Map();
 
   public add(session: Session): void {
     this.sessions.push(session);

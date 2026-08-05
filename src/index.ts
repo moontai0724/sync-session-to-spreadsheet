@@ -1,4 +1,4 @@
-import { SessionManager } from "./session-manager";
+import { SessionManager } from "./data-manager";
 import ENVIRONMENT from "../config";
 
 global.entrypoint = function (): void {

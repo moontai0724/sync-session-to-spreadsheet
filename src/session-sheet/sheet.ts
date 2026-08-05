@@ -2,7 +2,7 @@ import type { DailySessionManager } from "../data-manager/daily";
 import { HeaderManager } from "./headers";
 import { TimeManager } from "./time-slot";
 
-const TIME_HEADER_ROW = 3;
+const HEADER_ROW = 3;
 const MINUTES_PER_TIME_SLOT = 5;
 
 export class SessionSheetManager {
@@ -28,7 +28,7 @@ export class SessionSheetManager {
 
     this.timeManager = new TimeManager({
       sheet: this.sheet,
-      fromRow: TIME_HEADER_ROW,
+      fromRow: HEADER_ROW,
       startAt: this.dailySessionManager.startsAt,
       endAt: this.dailySessionManager.endsAt,
       minutesPerUnit: MINUTES_PER_TIME_SLOT,
@@ -36,7 +36,7 @@ export class SessionSheetManager {
     this.headerManager = new HeaderManager({
       sheet: this.sheet,
       rooms: Array.from(this.dailySessionManager.activeRooms.values()),
-      fromRow: this.timeManager.fromRow,
+      fromRow: HEADER_ROW,
       fromColumn: this.timeManager.fromColumn + 2,
     });
 

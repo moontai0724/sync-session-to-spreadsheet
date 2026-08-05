@@ -3,10 +3,6 @@ import { type CreateSessionDeps, Session } from "./session";
 import { DailySessionManager } from "./daily";
 
 export class SessionManager {
-  /**
-   * @example ["2026-08-08", "2026-08-09"]
-   */
-  public readonly dates: string[];
   public readonly sessionsByDate: Record<string, DailySessionManager> = {};
 
   public readonly activeRooms: Map<EventRoomId, EventRoom> = new Map();
@@ -37,12 +33,6 @@ export class SessionManager {
       const session = new Session(deps, rawSession);
       this.add(session);
     }
-
-    this.dates = Object.keys(this.sessionsByDate).sort((a, b) => {
-      const dateA = new Date(a);
-      const dateB = new Date(b);
-      return dateA.getTime() - dateB.getTime();
-    });
   }
 
   public add(session: Session): void {

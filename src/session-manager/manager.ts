@@ -1,5 +1,6 @@
-import { toMapById } from "./common";
-import { CreateSessionDeps, Session } from "./session";
+import { toMapById } from "../common";
+import { CreateSessionDeps, Session } from "../session";
+import { DailySessionManager } from "./daily";
 
 export class SessionManager {
   /**
@@ -31,21 +32,6 @@ export class SessionManager {
       const dateB = new Date(b);
       return dateA.getTime() - dateB.getTime();
     });
-  }
-}
-
-export class DailySessionManager {
-  public sessions: Session[] = [];
-  public startsAt!: Date;
-  public endsAt!: Date;
-
-  public add(session: Session): void {
-    this.sessions.push(session);
-
-    if (!this.startsAt || session.startsAt < this.startsAt)
-      this.startsAt = session.startsAt;
-    if (!this.endsAt || session.endsAt > this.endsAt)
-      this.endsAt = session.endsAt;
   }
 }
 

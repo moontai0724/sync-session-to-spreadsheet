@@ -1,4 +1,5 @@
 import type { DailySessionManager } from "../data-manager/daily";
+import { HeaderManager } from "./headers";
 import { TimeManager } from "./time-slot";
 
 const TIME_HEADER_ROW = 3;
@@ -9,6 +10,7 @@ export class SessionSheetManager {
   public readonly sheet: GoogleAppsScript.Spreadsheet.Sheet;
   public readonly sheetName: string;
   public readonly timeManager: TimeManager;
+  public readonly headerManager: HeaderManager;
 
   public constructor(
     public readonly day: number,
@@ -31,10 +33,17 @@ export class SessionSheetManager {
       endAt: this.dailySessionManager.endsAt,
       minutesPerUnit: MINUTES_PER_TIME_SLOT,
     });
+    this.headerManager = new HeaderManager({
+      sheet: this.sheet,
+      rooms: Array.from(this.dailySessionManager.activeRooms.values()),
+      fromRow: this.timeManager.fromRow,
+      fromColumn: this.timeManager.fromColumn + 2,
+    });
 
     if (!existingSheet) {
       resetSheet(this.sheet);
       this.timeManager.render();
+      this.headerManager.render();
     }
   }
 }

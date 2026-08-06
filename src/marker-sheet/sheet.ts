@@ -3,8 +3,18 @@ export const SESSION_PRIORITIES = [
   "necessary",
   "notable",
 ] as const;
+export const SESSION_MARKER_LEVELS = [
+  "special",
+  ...SESSION_PRIORITIES,
+] as const;
 
 export type SessionPriority = typeof SESSION_PRIORITIES[number];
+export type SessionMarkerLevel = typeof SESSION_MARKER_LEVELS[number];
+
+export interface SessionMarker {
+  readonly priority?: SessionPriority;
+  readonly special: boolean;
+}
 
 const SHEET_NAME = "Session Markers";
 const HEADER_ROW = 1;
@@ -20,6 +30,7 @@ export const SESSION_PRIORITY_COLORS: Record<SessionPriority, string> = {
   necessary: "#FCE5CD",
   notable: "#CFE2F3",
 };
+export const SPECIAL_SESSION_COLOR = "#B6D7A8";
 
 export class MarkerSheetManager {
   public readonly spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet;
@@ -47,36 +58,38 @@ export class MarkerSheetManager {
     this.sheet.setFrozenRows(HEADER_ROW);
   }
 
-  public getPriorities(): Map<EventSessionId, SessionPriority> {
-    const priorities = new Map<EventSessionId, SessionPriority>();
+  public getMarkers(): Map<EventSessionId, SessionMarker> {
+    const markers = new Map<EventSessionId, SessionMarker>();
     const rowCount = this.sheet.getLastRow() - HEADER_ROW;
-    if (rowCount <= 0) return priorities;
+    if (rowCount <= 0) return markers;
 
     const rows = this.sheet
       .getRange(FIRST_DATA_ROW, 1, rowCount, INPUT_COLUMN_COUNT)
       .getDisplayValues();
-    rows.forEach(([rawSessionId, rawPriority], offset) => {
+    rows.forEach(([rawSessionId, rawLevel], offset) => {
       const sessionId = rawSessionId.trim();
-      const priority = rawPriority.trim();
-      if (!sessionId && !priority) return;
+      const level = rawLevel.trim();
+      if (!sessionId && !level) return;
       const row = FIRST_DATA_ROW + offset;
       if (!sessionId) throw new RangeError(`Missing session ID at row ${row}`);
-      if (!priority) return;
-      if (!isSessionPriority(priority)) {
-        throw new RangeError(`Invalid priority at row ${row}: ${priority}`);
+      if (!level) return;
+      if (!isSessionMarkerLevel(level)) {
+        throw new RangeError(`Invalid marker level at row ${row}: ${level}`);
       }
 
-      const currentPriority = priorities.get(sessionId);
-      if (
-        !currentPriority ||
-        SESSION_PRIORITIES.indexOf(priority) <
-          SESSION_PRIORITIES.indexOf(currentPriority)
-      ) {
-        priorities.set(sessionId, priority);
+      const current = markers.get(sessionId);
+      if (level === "special") {
+        markers.set(sessionId, { ...current, special: true });
+        return;
       }
+
+      markers.set(sessionId, {
+        priority: getHigherPriority(current?.priority, level),
+        special: current?.special ?? false,
+      });
     });
 
-    return priorities;
+    return markers;
   }
 
   private ensureSize(): void {
@@ -133,7 +146,7 @@ export class MarkerSheetManager {
 
   private applyPriorityValidation(): void {
     const validation = SpreadsheetApp.newDataValidation()
-      .requireValueInList(Array.from(SESSION_PRIORITIES), true)
+      .requireValueInList(Array.from(SESSION_MARKER_LEVELS), true)
       .setAllowInvalid(false)
       .build();
     this.sheet
@@ -148,13 +161,20 @@ export class MarkerSheetManager {
       this.sheet.getMaxRows() - HEADER_ROW,
       COLUMN_COUNT,
     );
-    const rules = SESSION_PRIORITIES.map(priority =>
+    const rules = [
       SpreadsheetApp.newConditionalFormatRule()
-        .whenFormulaSatisfied(`=$B${FIRST_DATA_ROW}="${priority}"`)
-        .setBackground(SESSION_PRIORITY_COLORS[priority])
+        .whenFormulaSatisfied(`=$B${FIRST_DATA_ROW}="special"`)
+        .setBackground(SPECIAL_SESSION_COLOR)
         .setRanges([range])
         .build(),
-    );
+      ...SESSION_PRIORITIES.map(priority =>
+        SpreadsheetApp.newConditionalFormatRule()
+          .whenFormulaSatisfied(`=$B${FIRST_DATA_ROW}="${priority}"`)
+          .setBackground(SESSION_PRIORITY_COLORS[priority])
+          .setRanges([range])
+          .build(),
+      ),
+    ];
     this.sheet.setConditionalFormatRules(rules);
   }
 
@@ -203,8 +223,19 @@ export class MarkerSheetManager {
   }
 }
 
-function isSessionPriority(value: string): value is SessionPriority {
-  return (SESSION_PRIORITIES as readonly string[]).includes(value);
+function isSessionMarkerLevel(value: string): value is SessionMarkerLevel {
+  return (SESSION_MARKER_LEVELS as readonly string[]).includes(value);
+}
+
+function getHigherPriority(
+  current: SessionPriority | undefined,
+  candidate: SessionPriority,
+): SessionPriority {
+  if (!current) return candidate;
+  return SESSION_PRIORITIES.indexOf(candidate) <
+    SESSION_PRIORITIES.indexOf(current)
+    ? candidate
+    : current;
 }
 
 function resetSheet(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {

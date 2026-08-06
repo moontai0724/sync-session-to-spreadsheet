@@ -1,5 +1,5 @@
 import type { DailySessionManager } from "../data-manager/daily";
-import type { SessionPriority } from "../marker-sheet";
+import type { SessionMarker } from "../marker-sheet";
 import { HeaderManager } from "./headers";
 import { SessionManager } from "./session";
 import { TimeManager } from "./time-slot";
@@ -18,7 +18,7 @@ export class SessionSheetManager {
   public constructor(
     public readonly day: number,
     public readonly dailySessionManager: DailySessionManager,
-    priorities: ReadonlyMap<EventSessionId, SessionPriority>,
+    markers: ReadonlyMap<EventSessionId, SessionMarker>,
   ) {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const date = dailySessionManager.startsAt.toLocaleDateString("zh-TW", {
@@ -52,7 +52,7 @@ export class SessionSheetManager {
       sessions: this.dailySessionManager.sessions,
       timeManager: this.timeManager,
       headerManager: this.headerManager,
-      priorities,
+      markers,
     });
     this.sessionManager.render();
 

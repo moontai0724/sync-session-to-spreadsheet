@@ -9,7 +9,7 @@ global.entrypoint = function (): void {
   ) as EventData;
   const markerSheetManager = new MarkerSheetManager(eventData);
   markerSheetManager.initialize();
-  const sessionPriorities = markerSheetManager.getPriorities();
+  const sessionMarkers = markerSheetManager.getMarkers();
 
   const sessionManager = new SessionManager(eventData);
   const dates = Object.keys(sessionManager.sessionsByDate).sort();
@@ -26,6 +26,6 @@ global.entrypoint = function (): void {
       dailySessionManager.endsAt.toISOString(),
     );
 
-    new SessionSheetManager(day + 1, dailySessionManager, sessionPriorities);
+    new SessionSheetManager(day + 1, dailySessionManager, sessionMarkers);
   });
 };

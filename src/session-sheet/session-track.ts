@@ -1,31 +1,35 @@
 import type { Session } from "../data-manager/session";
-import { SESSION_PRIORITY_COLORS, type SessionPriority } from "../marker-sheet";
+import {
+  SESSION_PRIORITY_COLORS,
+  SPECIAL_SESSION_COLOR,
+  type SessionMarker,
+} from "../marker-sheet";
 import type { TimeManager } from "./time-slot";
 
 export interface SessionTrackManagerOptions {
   room: EventRoom;
   column: number;
   timeManager: TimeManager;
-  priorities: ReadonlyMap<EventSessionId, SessionPriority>;
+  markers: ReadonlyMap<EventSessionId, SessionMarker>;
 }
 
 export class SessionTrackManager {
   public readonly room: EventRoom;
   public readonly column: number;
   public readonly timeManager: TimeManager;
-  public readonly priorities: ReadonlyMap<EventSessionId, SessionPriority>;
+  public readonly markers: ReadonlyMap<EventSessionId, SessionMarker>;
   private readonly sessions: Session[] = [];
 
   public constructor({
     room,
     column,
     timeManager,
-    priorities,
+    markers,
   }: SessionTrackManagerOptions) {
     this.room = room;
     this.column = column;
     this.timeManager = timeManager;
-    this.priorities = priorities;
+    this.markers = markers;
   }
 
   public add(session: Session): void {
@@ -66,6 +70,7 @@ export class SessionTrackManager {
       .setText(formatSession(session))
       .setLinkUrl(session.url)
       .build();
+    const marker = this.markers.get(session.id);
 
     const range = this.timeManager.sheet
       .getRange(startRow, this.column, endRow - startRow, 1)
@@ -81,12 +86,15 @@ export class SessionTrackManager {
         true,
         false,
         false,
-        "black",
-        SpreadsheetApp.BorderStyle.SOLID,
+        marker?.special ? SPECIAL_SESSION_COLOR : "black",
+        marker?.special
+          ? SpreadsheetApp.BorderStyle.SOLID_THICK
+          : SpreadsheetApp.BorderStyle.SOLID,
       );
 
-    const priority = this.priorities.get(session.id);
-    if (priority) range.setBackground(SESSION_PRIORITY_COLORS[priority]);
+    if (marker?.priority) {
+      range.setBackground(SESSION_PRIORITY_COLORS[marker.priority]);
+    }
   }
 }
 

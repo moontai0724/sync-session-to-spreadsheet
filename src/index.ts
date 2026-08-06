@@ -1,5 +1,6 @@
 import { SessionManager } from "./data-manager";
 import ENVIRONMENT from "../config";
+import { SessionSheetManager } from "./session-sheet/sheet";
 
 global.entrypoint = function (): void {
   const eventData = JSON.parse(
@@ -19,5 +20,7 @@ global.entrypoint = function (): void {
       dailySessionManager.startsAt.toISOString(),
       dailySessionManager.endsAt.toISOString(),
     );
+
+    new SessionSheetManager(day + 1, dailySessionManager);
   });
 };

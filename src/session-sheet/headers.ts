@@ -41,4 +41,10 @@ export class HeaderManager {
       .getRange(this.fromRow, this.fromColumn, 1, this.rooms.length)
       .setValues([this.rooms.map(room => room.zh.name)]);
   }
+
+  public getColumnByRoomId(roomId: EventRoomId): number {
+    const offset = this.rooms.findIndex(room => room.id === roomId);
+    if (offset < 0) throw new RangeError(`Room ${roomId} is not rendered`);
+    return this.fromColumn + offset;
+  }
 }

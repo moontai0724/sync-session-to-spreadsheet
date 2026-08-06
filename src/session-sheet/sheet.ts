@@ -1,5 +1,6 @@
 import type { DailySessionManager } from "../data-manager/daily";
 import { HeaderManager } from "./headers";
+import { SessionManager } from "./session";
 import { TimeManager } from "./time-slot";
 
 const HEADER_ROW = 3;
@@ -11,6 +12,7 @@ export class SessionSheetManager {
   public readonly sheetName: string;
   public readonly timeManager: TimeManager;
   public readonly headerManager: HeaderManager;
+  public readonly sessionManager: SessionManager;
 
   public constructor(
     public readonly day: number,
@@ -39,11 +41,17 @@ export class SessionSheetManager {
       fromRow: HEADER_ROW,
       fromColumn: this.timeManager.fromColumn + 2,
     });
+    this.sessionManager = new SessionManager({
+      sessions: this.dailySessionManager.sessions,
+      timeManager: this.timeManager,
+      headerManager: this.headerManager,
+    });
 
     if (!existingSheet) {
       resetSheet(this.sheet);
       this.timeManager.render();
       this.headerManager.render();
+      this.sessionManager.render();
       this.sheet.setFrozenRows(this.headerManager.fromRow);
       this.sheet.setFrozenColumns(this.timeManager.fromColumn + 1);
     }

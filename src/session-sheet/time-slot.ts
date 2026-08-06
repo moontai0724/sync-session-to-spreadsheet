@@ -119,6 +119,20 @@ export class TimeManager {
     }
   }
 
+  public getRowByTime(time: Date): number {
+    validateDate("time", time);
+
+    const offset = time.getTime() - this.startAt.getTime();
+    if (offset < 0 || time > this.endAt) {
+      throw new RangeError("time must be within the rendered time range");
+    }
+    if (offset % this.unitMilliseconds !== 0) {
+      throw new RangeError("time must align with a time slot");
+    }
+
+    return this.fromRow + 1 + offset / this.unitMilliseconds;
+  }
+
   private createSlots(): Date[] {
     const slots: Date[] = [];
     for (

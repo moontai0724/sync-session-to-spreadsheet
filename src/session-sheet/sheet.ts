@@ -51,10 +51,11 @@ export class SessionSheetManager {
       resetSheet(this.sheet);
       this.timeManager.render();
       this.headerManager.render();
-      this.sessionManager.render();
       this.sheet.setFrozenRows(this.headerManager.fromRow);
       this.sheet.setFrozenColumns(this.timeManager.fromColumn + 1);
     }
+
+    this.sessionManager.render();
   }
 }
 

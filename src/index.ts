@@ -7,7 +7,9 @@ global.entrypoint = function (): void {
   const eventData = JSON.parse(
     UrlFetchApp.fetch(ENVIRONMENT.DATA_SOURCE).getContentText(),
   ) as EventData;
-  new MarkerSheetManager(eventData).initialize();
+  const markerSheetManager = new MarkerSheetManager(eventData);
+  markerSheetManager.initialize();
+  const sessionPriorities = markerSheetManager.getPriorities();
 
   const sessionManager = new SessionManager(eventData);
   const dates = Object.keys(sessionManager.sessionsByDate).sort();
@@ -24,6 +26,6 @@ global.entrypoint = function (): void {
       dailySessionManager.endsAt.toISOString(),
     );
 
-    new SessionSheetManager(day + 1, dailySessionManager);
+    new SessionSheetManager(day + 1, dailySessionManager, sessionPriorities);
   });
 };

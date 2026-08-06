@@ -15,7 +15,7 @@ const DETAIL_START_COLUMN = 3;
 const DETAIL_COLUMN_COUNT = 3;
 const COLUMN_COUNT = INPUT_COLUMN_COUNT + DETAIL_COLUMN_COUNT;
 
-const PRIORITY_COLORS: Record<SessionPriority, string> = {
+export const SESSION_PRIORITY_COLORS: Record<SessionPriority, string> = {
   important: "#F4CCCC",
   necessary: "#FCE5CD",
   notable: "#CFE2F3",
@@ -150,7 +150,7 @@ export class MarkerSheetManager {
     const rules = SESSION_PRIORITIES.map(priority =>
       SpreadsheetApp.newConditionalFormatRule()
         .whenFormulaSatisfied(`=$B${FIRST_DATA_ROW}="${priority}"`)
-        .setBackground(PRIORITY_COLORS[priority])
+        .setBackground(SESSION_PRIORITY_COLORS[priority])
         .setRanges([range])
         .build(),
     );

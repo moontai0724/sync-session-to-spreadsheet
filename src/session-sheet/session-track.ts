@@ -1,26 +1,31 @@
 import type { Session } from "../data-manager/session";
+import { SESSION_PRIORITY_COLORS, type SessionPriority } from "../marker-sheet";
 import type { TimeManager } from "./time-slot";
 
 export interface SessionTrackManagerOptions {
   room: EventRoom;
   column: number;
   timeManager: TimeManager;
+  priorities: ReadonlyMap<EventSessionId, SessionPriority>;
 }
 
 export class SessionTrackManager {
   public readonly room: EventRoom;
   public readonly column: number;
   public readonly timeManager: TimeManager;
+  public readonly priorities: ReadonlyMap<EventSessionId, SessionPriority>;
   private readonly sessions: Session[] = [];
 
   public constructor({
     room,
     column,
     timeManager,
+    priorities,
   }: SessionTrackManagerOptions) {
     this.room = room;
     this.column = column;
     this.timeManager = timeManager;
+    this.priorities = priorities;
   }
 
   public add(session: Session): void {
@@ -62,7 +67,7 @@ export class SessionTrackManager {
       .setLinkUrl(session.url)
       .build();
 
-    this.timeManager.sheet
+    const range = this.timeManager.sheet
       .getRange(startRow, this.column, endRow - startRow, 1)
       .merge()
       .setRichTextValue(richValue)
@@ -79,6 +84,9 @@ export class SessionTrackManager {
         "black",
         SpreadsheetApp.BorderStyle.SOLID,
       );
+
+    const priority = this.priorities.get(session.id);
+    if (priority) range.setBackground(SESSION_PRIORITY_COLORS[priority]);
   }
 }
 

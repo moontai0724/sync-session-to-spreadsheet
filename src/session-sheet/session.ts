@@ -1,4 +1,5 @@
 import type { Session } from "../data-manager/session";
+import type { SessionPriority } from "../marker-sheet";
 import type { HeaderManager } from "./headers";
 import { SessionTrackManager } from "./session-track";
 import type { TimeManager } from "./time-slot";
@@ -7,22 +8,26 @@ export interface SessionManagerOptions {
   sessions: readonly Session[];
   timeManager: TimeManager;
   headerManager: HeaderManager;
+  priorities: ReadonlyMap<EventSessionId, SessionPriority>;
 }
 
 export class SessionManager {
   public readonly sessions: readonly Session[];
   public readonly timeManager: TimeManager;
   public readonly headerManager: HeaderManager;
+  public readonly priorities: ReadonlyMap<EventSessionId, SessionPriority>;
   public readonly tracksByRoom: Map<EventRoomId, SessionTrackManager>;
 
   public constructor({
     sessions,
     timeManager,
     headerManager,
+    priorities,
   }: SessionManagerOptions) {
     this.sessions = sessions;
     this.timeManager = timeManager;
     this.headerManager = headerManager;
+    this.priorities = priorities;
     this.tracksByRoom = new Map(
       headerManager.rooms.map(
         room =>
@@ -32,6 +37,7 @@ export class SessionManager {
               room,
               column: headerManager.getColumnByRoomId(room.id),
               timeManager,
+              priorities,
             }),
           ] as const,
       ),

@@ -168,32 +168,38 @@ export class MarkerSheetManager {
       .getDisplayValues();
     const details = sessionIds.map(([rawSessionId]) => {
       const sessionId = rawSessionId.trim();
-      if (!sessionId) return ["", "", ""];
+      if (!sessionId) return { title: "", url: "", room: "", time: "" };
 
       const session = this.sessionsById.get(sessionId);
       if (!session) {
         Logger.log(`WARN: Unknown marker session ID ${sessionId}.`);
-        return ["", "", ""];
+        return { title: "", url: "", room: "", time: "" };
       }
 
       const room = this.roomsById.get(session.room);
       if (!room) Logger.log(`WARN: Session ${sessionId} has unknown room.`);
 
-      return [
-        session.zh.title,
-        room?.zh.name ?? session.room,
-        formatSessionTime(session, timezone),
-      ];
+      return {
+        title: session.zh.title,
+        url: session.uri,
+        room: room?.zh.name ?? session.room,
+        time: formatSessionTime(session, timezone),
+      };
     });
 
     this.sheet
+      .getRange(FIRST_DATA_ROW, DETAIL_START_COLUMN, rowCount, 1)
+      .setRichTextValues(
+        details.map(({ title, url }) => [createTitleValue(title, url)]),
+      );
+    this.sheet
       .getRange(
         FIRST_DATA_ROW,
-        DETAIL_START_COLUMN,
+        DETAIL_START_COLUMN + 1,
         rowCount,
-        DETAIL_COLUMN_COUNT,
+        DETAIL_COLUMN_COUNT - 1,
       )
-      .setValues(details);
+      .setValues(details.map(({ room, time }) => [room, time]));
   }
 }
 
@@ -212,6 +218,15 @@ function resetSheet(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {
   if (extraColumns > 0) {
     sheet.deleteColumns(COLUMN_COUNT + 1, extraColumns);
   }
+}
+
+function createTitleValue(
+  title: string,
+  url: string,
+): GoogleAppsScript.Spreadsheet.RichTextValue {
+  const builder = SpreadsheetApp.newRichTextValue().setText(title);
+  if (url) builder.setLinkUrl(url);
+  return builder.build();
 }
 
 function formatSessionTime(session: EventSession, timezone: string): string {

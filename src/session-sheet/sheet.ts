@@ -27,6 +27,7 @@ export class SessionSheetManager {
     this.sheetName = `Day ${day} (${date})`;
     const existingSheet = this.spreadsheet.getSheetByName(this.sheetName);
     this.sheet = existingSheet ?? this.spreadsheet.insertSheet(this.sheetName);
+    if (!existingSheet) resetSheet(this.sheet);
 
     this.timeManager = new TimeManager({
       sheet: this.sheet,
@@ -35,27 +36,27 @@ export class SessionSheetManager {
       endAt: this.dailySessionManager.endsAt,
       minutesPerUnit: MINUTES_PER_TIME_SLOT,
     });
+    this.timeManager.render();
+
     this.headerManager = new HeaderManager({
       sheet: this.sheet,
       rooms: Array.from(this.dailySessionManager.activeRooms.values()),
       fromRow: HEADER_ROW,
       fromColumn: this.timeManager.fromColumn + 2,
     });
+    this.headerManager.render();
+
     this.sessionManager = new SessionManager({
       sessions: this.dailySessionManager.sessions,
       timeManager: this.timeManager,
       headerManager: this.headerManager,
     });
+    this.sessionManager.render();
 
     if (!existingSheet) {
-      resetSheet(this.sheet);
-      this.timeManager.render();
-      this.headerManager.render();
       this.sheet.setFrozenRows(this.headerManager.fromRow);
       this.sheet.setFrozenColumns(this.timeManager.fromColumn + 1);
     }
-
-    this.sessionManager.render();
   }
 }
 

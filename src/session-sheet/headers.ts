@@ -1,3 +1,5 @@
+const ROOM_NOTE_PREFIX = "sync-session-room:v1:";
+
 export interface HeaderManagerOptions {
   sheet: GoogleAppsScript.Spreadsheet.Sheet;
   rooms: readonly EventRoom[];
@@ -12,6 +14,9 @@ export class HeaderManager {
   public readonly fromRow: number;
   public readonly fromColumn: number;
   public readonly columnWidth: number;
+
+  private readonly roomColumns = new Map<EventRoomId, number>();
+  private managedRoomColumns: number[] = [];
 
   public constructor({
     sheet,
@@ -32,32 +37,83 @@ export class HeaderManager {
   }
 
   public render(): void {
-    if (this.rooms.length === 0) return;
+    this.ensureHeaderRow();
+    this.scanRoomMarkers();
+    this.addMissingRoomColumns();
 
-    const lastColumn = this.fromColumn + this.rooms.length - 1;
-    const missingColumns = lastColumn - this.sheet.getMaxColumns();
-    if (missingColumns > 0) {
-      this.sheet.insertColumnsAfter(this.sheet.getMaxColumns(), missingColumns);
+    const activeRoomIds = new Set(this.rooms.map(room => room.id));
+    for (const [roomId, column] of Array.from(this.roomColumns.entries())) {
+      if (activeRoomIds.has(roomId)) continue;
+      this.sheet.getRange(this.fromRow, column).clearContent();
     }
 
+    for (const room of this.rooms) {
+      const column = this.getColumnByRoomId(room.id);
+      this.sheet
+        .getRange(this.fromRow, column)
+        .setValue(room.zh.name)
+        .setNote(`${ROOM_NOTE_PREFIX}${room.id}`);
+      this.sheet.setColumnWidth(column, this.columnWidth);
+    }
+
+    this.managedRoomColumns = Array.from(this.roomColumns.values()).sort(
+      (a, b) => a - b,
+    );
+  }
+
+  public getColumnByRoomId(roomId: EventRoomId): number {
+    const column = this.roomColumns.get(roomId);
+    if (!column) throw new RangeError(`Room ${roomId} is not rendered`);
+    return column;
+  }
+
+  public getManagedRoomColumns(): readonly number[] {
+    return this.managedRoomColumns;
+  }
+
+  private ensureHeaderRow(): void {
     const missingRows = this.fromRow - this.sheet.getMaxRows();
     if (missingRows > 0) {
       this.sheet.insertRowsAfter(this.sheet.getMaxRows(), missingRows);
     }
-
-    this.sheet.setColumnWidths(
-      this.fromColumn,
-      this.rooms.length,
-      this.columnWidth,
-    );
-    this.sheet
-      .getRange(this.fromRow, this.fromColumn, 1, this.rooms.length)
-      .setValues([this.rooms.map(room => room.zh.name)]);
   }
 
-  public getColumnByRoomId(roomId: EventRoomId): number {
-    const offset = this.rooms.findIndex(room => room.id === roomId);
-    if (offset < 0) throw new RangeError(`Room ${roomId} is not rendered`);
-    return this.fromColumn + offset;
+  private scanRoomMarkers(): void {
+    this.roomColumns.clear();
+    const notes = this.sheet
+      .getRange(this.fromRow, 1, 1, this.sheet.getMaxColumns())
+      .getNotes()[0];
+
+    notes.forEach((note, offset) => {
+      const column = offset + 1;
+      if (column < this.fromColumn || !note.startsWith(ROOM_NOTE_PREFIX)) {
+        return;
+      }
+
+      const roomId = note.slice(ROOM_NOTE_PREFIX.length);
+      if (!roomId) return;
+      if (this.roomColumns.has(roomId)) {
+        throw new RangeError(`Duplicate room marker for ${roomId}`);
+      }
+      this.roomColumns.set(roomId, column);
+    });
+  }
+
+  private addMissingRoomColumns(): void {
+    const missingRooms = this.rooms.filter(
+      room => !this.roomColumns.has(room.id),
+    );
+    if (missingRooms.length === 0) return;
+
+    const insertAfter = Math.max(
+      this.fromColumn - 1,
+      this.sheet.getLastColumn(),
+      ...Array.from(this.roomColumns.values()),
+    );
+    this.sheet.insertColumnsAfter(insertAfter, missingRooms.length);
+
+    missingRooms.forEach((room, offset) => {
+      this.roomColumns.set(room.id, insertAfter + offset + 1);
+    });
   }
 }

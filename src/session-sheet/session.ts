@@ -52,6 +52,38 @@ export class SessionManager {
   }
 
   public render(): void {
+    this.clearManagedColumns();
     for (const track of Array.from(this.tracksByRoom.values())) track.render();
   }
+
+  private clearManagedColumns(): void {
+    const fromRow = this.headerManager.fromRow + 1;
+    const rowCount =
+      this.timeManager.sheet.getMaxRows() - this.headerManager.fromRow;
+    if (rowCount <= 0) return;
+
+    for (const group of groupColumns(
+      this.headerManager.getManagedRoomColumns(),
+    )) {
+      this.timeManager.sheet
+        .getRange(fromRow, group.fromColumn, rowCount, group.columnCount)
+        .breakApart()
+        .clear();
+    }
+  }
+}
+
+function groupColumns(
+  columns: readonly number[],
+): Array<{ fromColumn: number; columnCount: number }> {
+  const groups: Array<{ fromColumn: number; columnCount: number }> = [];
+  for (const column of columns) {
+    const current = groups[groups.length - 1];
+    if (current && current.fromColumn + current.columnCount === column) {
+      current.columnCount++;
+    } else {
+      groups.push({ fromColumn: column, columnCount: 1 });
+    }
+  }
+  return groups;
 }

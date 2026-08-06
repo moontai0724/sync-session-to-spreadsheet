@@ -1,11 +1,14 @@
 import { SessionManager } from "./data-manager";
 import ENVIRONMENT from "../config";
+import { MarkerSheetManager } from "./marker-sheet";
 import { SessionSheetManager } from "./session-sheet/sheet";
 
 global.entrypoint = function (): void {
   const eventData = JSON.parse(
     UrlFetchApp.fetch(ENVIRONMENT.DATA_SOURCE).getContentText(),
   ) as EventData;
+  new MarkerSheetManager(eventData).initialize();
+
   const sessionManager = new SessionManager(eventData);
   const dates = Object.keys(sessionManager.sessionsByDate).sort();
   Logger.log("Dates: %s", dates);

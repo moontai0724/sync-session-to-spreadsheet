@@ -49,7 +49,6 @@ export class MarkerSheetManager {
 
   public getPriorities(): Map<EventSessionId, SessionPriority> {
     const priorities = new Map<EventSessionId, SessionPriority>();
-    const seenSessionIds = new Set<EventSessionId>();
     const rowCount = this.sheet.getLastRow() - HEADER_ROW;
     if (rowCount <= 0) return priorities;
 
@@ -62,17 +61,19 @@ export class MarkerSheetManager {
       if (!sessionId && !priority) return;
       const row = FIRST_DATA_ROW + offset;
       if (!sessionId) throw new RangeError(`Missing session ID at row ${row}`);
-      if (seenSessionIds.has(sessionId)) {
-        throw new RangeError(
-          `Duplicate session ID at row ${row}: ${sessionId}`,
-        );
-      }
-      seenSessionIds.add(sessionId);
       if (!priority) return;
       if (!isSessionPriority(priority)) {
         throw new RangeError(`Invalid priority at row ${row}: ${priority}`);
       }
-      priorities.set(sessionId, priority);
+
+      const currentPriority = priorities.get(sessionId);
+      if (
+        !currentPriority ||
+        SESSION_PRIORITIES.indexOf(priority) <
+          SESSION_PRIORITIES.indexOf(currentPriority)
+      ) {
+        priorities.set(sessionId, priority);
+      }
     });
 
     return priorities;

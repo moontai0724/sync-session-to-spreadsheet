@@ -1,3 +1,7 @@
+import type { EventDayManager } from "../data-manager/event-day";
+import type { Session } from "../data-manager/session";
+import type { SessionManager } from "../data-manager/sessions";
+
 export const SESSION_PRIORITIES = [
   "important",
   "necessary",
@@ -38,17 +42,12 @@ export const SPECIAL_SESSION_BORDER_COLOR = "#CC0000";
 export class MarkerSheetManager {
   public readonly spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet;
   public readonly sheet: GoogleAppsScript.Spreadsheet.Sheet;
-  private readonly sessionsById: Map<EventSessionId, EventSession>;
-  private readonly roomsById: Map<EventRoomId, EventRoom>;
 
-  public constructor({ sessions, rooms }: EventData) {
+  public constructor() {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const existingSheet = this.spreadsheet.getSheetByName(SHEET_NAME);
     this.sheet = existingSheet ?? this.spreadsheet.insertSheet(SHEET_NAME);
     if (!existingSheet) resetSheet(this.sheet);
-
-    this.sessionsById = new Map(sessions.map(session => [session.id, session]));
-    this.roomsById = new Map(rooms.map(room => [room.id, room]));
   }
 
   public initialize(): void {
@@ -57,8 +56,51 @@ export class MarkerSheetManager {
     this.formatColumns();
     this.applyPriorityValidation();
     this.applyConditionalFormatting();
-    this.fillSessionDetails();
     this.sheet.setFrozenRows(HEADER_ROW);
+  }
+
+  public syncSessionDetails(
+    sessionManager: SessionManager,
+    eventDayManager: EventDayManager,
+  ): void {
+    const rowCount = this.sheet.getLastRow() - HEADER_ROW;
+    if (rowCount <= 0) return;
+
+    const timezone = this.spreadsheet.getSpreadsheetTimeZone();
+    const sessionIds = this.sheet
+      .getRange(FIRST_DATA_ROW, 1, rowCount, 1)
+      .getDisplayValues();
+    const details = sessionIds.map(([rawSessionId]) => {
+      const sessionId = rawSessionId.trim();
+      if (!sessionId) return { title: "", url: "", room: "", time: "" };
+
+      const session = sessionManager.getSession(sessionId);
+      if (!session) {
+        Logger.log(`WARN: Unknown marker session ID ${sessionId}.`);
+        return { title: "", url: "", room: "", time: "" };
+      }
+
+      return {
+        title: session.title,
+        url: eventDayManager.getSessionUrl(session.id),
+        room: session.room?.zh.name ?? session.roomId,
+        time: formatSessionTime(session, timezone),
+      };
+    });
+
+    this.sheet
+      .getRange(FIRST_DATA_ROW, DETAIL_START_COLUMN, rowCount, 1)
+      .setRichTextValues(
+        details.map(({ title, url }) => [createTitleValue(title, url)]),
+      );
+    this.sheet
+      .getRange(
+        FIRST_DATA_ROW,
+        DETAIL_START_COLUMN + 1,
+        rowCount,
+        DETAIL_COLUMN_COUNT - 1,
+      )
+      .setValues(details.map(({ room, time }) => [room, time]));
   }
 
   public getMarkers(): Map<EventSessionId, SessionMarker> {
@@ -194,50 +236,6 @@ export class MarkerSheetManager {
     ];
     this.sheet.setConditionalFormatRules(rules);
   }
-
-  private fillSessionDetails(): void {
-    const rowCount = this.sheet.getLastRow() - HEADER_ROW;
-    if (rowCount <= 0) return;
-
-    const timezone = this.spreadsheet.getSpreadsheetTimeZone();
-    const sessionIds = this.sheet
-      .getRange(FIRST_DATA_ROW, 1, rowCount, 1)
-      .getDisplayValues();
-    const details = sessionIds.map(([rawSessionId]) => {
-      const sessionId = rawSessionId.trim();
-      if (!sessionId) return { title: "", url: "", room: "", time: "" };
-
-      const session = this.sessionsById.get(sessionId);
-      if (!session) {
-        Logger.log(`WARN: Unknown marker session ID ${sessionId}.`);
-        return { title: "", url: "", room: "", time: "" };
-      }
-
-      const room = this.roomsById.get(session.room);
-      if (!room) Logger.log(`WARN: Session ${sessionId} has unknown room.`);
-
-      return {
-        title: session.zh.title,
-        url: session.uri,
-        room: room?.zh.name ?? session.room,
-        time: formatSessionTime(session, timezone),
-      };
-    });
-
-    this.sheet
-      .getRange(FIRST_DATA_ROW, DETAIL_START_COLUMN, rowCount, 1)
-      .setRichTextValues(
-        details.map(({ title, url }) => [createTitleValue(title, url)]),
-      );
-    this.sheet
-      .getRange(
-        FIRST_DATA_ROW,
-        DETAIL_START_COLUMN + 1,
-        rowCount,
-        DETAIL_COLUMN_COUNT - 1,
-      )
-      .setValues(details.map(({ room, time }) => [room, time]));
-  }
 }
 
 function isSessionMarkerLevel(value: string): value is SessionMarkerLevel {
@@ -277,9 +275,8 @@ function createTitleValue(
   return builder.build();
 }
 
-function formatSessionTime(session: EventSession, timezone: string): string {
-  const startsAt = new Date(session.start);
-  const endsAt = new Date(session.end);
+function formatSessionTime(session: Session, timezone: string): string {
+  const { startsAt, endsAt } = session;
   if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
     Logger.log(`WARN: Session ${session.id} has an invalid time.`);
     return "";

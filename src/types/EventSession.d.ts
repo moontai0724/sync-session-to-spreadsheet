@@ -28,7 +28,7 @@ interface EventSession {
   /** a link to record video */
   record: string | null;
   /** a link to session on official website */
-  uri: string;
+  uri?: string | null;
 }
 
 interface EventSessionDetail {

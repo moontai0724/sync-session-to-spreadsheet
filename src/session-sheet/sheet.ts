@@ -1,11 +1,12 @@
+import ENVIRONMENT from "../../config";
 import type { DailySessionManager } from "../data-manager/daily";
+import type { EventDayManager } from "../data-manager/event-day";
 import type { SessionMarker } from "../marker-sheet";
 import { HeaderManager } from "./headers";
 import { SessionManager } from "./session";
 import { TimeManager } from "./time-slot";
 
 const HEADER_ROW = 3;
-const MINUTES_PER_TIME_SLOT = 5;
 
 export class SessionSheetManager {
   public readonly spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet;
@@ -19,6 +20,7 @@ export class SessionSheetManager {
     public readonly day: number,
     public readonly dailySessionManager: DailySessionManager,
     markers: ReadonlyMap<EventSessionId, SessionMarker>,
+    eventDayManager: EventDayManager,
   ) {
     this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const date = dailySessionManager.startsAt.toLocaleDateString("zh-TW", {
@@ -36,7 +38,7 @@ export class SessionSheetManager {
       fromRow: HEADER_ROW,
       startAt: this.dailySessionManager.startsAt,
       endAt: this.dailySessionManager.endsAt,
-      minutesPerUnit: MINUTES_PER_TIME_SLOT,
+      minutesPerUnit: ENVIRONMENT.MINUTES_PER_UNIT,
     });
     this.timeManager.render();
 
@@ -53,6 +55,7 @@ export class SessionSheetManager {
       timeManager: this.timeManager,
       headerManager: this.headerManager,
       markers,
+      eventDayManager,
     });
     this.sessionManager.render();
 

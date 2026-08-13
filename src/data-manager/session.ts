@@ -7,11 +7,10 @@ export interface CreateSessionDeps {
 export class Session {
   public readonly id: string;
   public readonly title: string;
-  public readonly date: string;
   public readonly startsAt: Date;
   public readonly endsAt: Date;
-  public readonly url: string;
 
+  public readonly roomId: EventRoomId;
   public readonly room: EventRoom | null;
   public readonly type: EventSessionType | null;
   public readonly speakers: EventSpeaker[];
@@ -24,13 +23,7 @@ export class Session {
     this.title = raw.zh.title;
     this.startsAt = new Date(raw.start);
     this.endsAt = new Date(raw.end);
-    this.date = this.startsAt.toLocaleDateString("zh-TW", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    this.url = raw.uri;
-
+    this.roomId = raw.room;
     this.room = getRoom(roomsById, raw.room);
     this.type = getType(typesById, raw.type);
     this.speakers = getSpeakers(speakersById, raw.speakers);

@@ -1,4 +1,5 @@
 import type { Session } from "../data-manager/session";
+import type { EventDayManager } from "../data-manager/event-day";
 import type { SessionMarker } from "../marker-sheet";
 import type { HeaderManager } from "./headers";
 import { SessionTrackManager } from "./session-track";
@@ -9,6 +10,7 @@ export interface SessionManagerOptions {
   timeManager: TimeManager;
   headerManager: HeaderManager;
   markers: ReadonlyMap<EventSessionId, SessionMarker>;
+  eventDayManager: EventDayManager;
 }
 
 export class SessionManager {
@@ -23,6 +25,7 @@ export class SessionManager {
     timeManager,
     headerManager,
     markers,
+    eventDayManager,
   }: SessionManagerOptions) {
     this.sessions = sessions;
     this.timeManager = timeManager;
@@ -38,6 +41,7 @@ export class SessionManager {
               column: headerManager.getColumnByRoomId(room.id),
               timeManager,
               markers,
+              eventDayManager,
             }),
           ] as const,
       ),

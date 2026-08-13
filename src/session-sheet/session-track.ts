@@ -1,4 +1,5 @@
 import type { Session } from "../data-manager/session";
+import type { EventDayManager } from "../data-manager/event-day";
 import {
   SESSION_PRIORITY_COLORS,
   SPECIAL_SESSION_BORDER_COLOR,
@@ -11,6 +12,7 @@ export interface SessionTrackManagerOptions {
   column: number;
   timeManager: TimeManager;
   markers: ReadonlyMap<EventSessionId, SessionMarker>;
+  eventDayManager: EventDayManager;
 }
 
 export class SessionTrackManager {
@@ -18,6 +20,7 @@ export class SessionTrackManager {
   public readonly column: number;
   public readonly timeManager: TimeManager;
   public readonly markers: ReadonlyMap<EventSessionId, SessionMarker>;
+  public readonly eventDayManager: EventDayManager;
   private readonly sessions: Session[] = [];
 
   public constructor({
@@ -25,11 +28,13 @@ export class SessionTrackManager {
     column,
     timeManager,
     markers,
+    eventDayManager,
   }: SessionTrackManagerOptions) {
     this.room = room;
     this.column = column;
     this.timeManager = timeManager;
     this.markers = markers;
+    this.eventDayManager = eventDayManager;
   }
 
   public add(session: Session): void {
@@ -68,7 +73,7 @@ export class SessionTrackManager {
     const endRow = this.timeManager.getRowByTime(endAt);
     const richValue = SpreadsheetApp.newRichTextValue()
       .setText(formatSession(session))
-      .setLinkUrl(session.url)
+      .setLinkUrl(this.eventDayManager.getSessionUrl(session.id))
       .build();
     const marker = this.markers.get(session.id);
 

@@ -1,4 +1,4 @@
-import { SessionManager } from "./data-manager";
+import { EventDayManager, SessionManager } from "./data-manager";
 import ENVIRONMENT from "../config";
 import { MarkerSheetManager } from "./marker-sheet";
 import { SessionSheetManager } from "./session-sheet/sheet";
@@ -7,7 +7,7 @@ global.entrypoint = function (): void {
   const eventData = JSON.parse(
     UrlFetchApp.fetch(ENVIRONMENT.DATA_SOURCE).getContentText(),
   ) as EventData;
-  const markerSheetManager = new MarkerSheetManager(eventData);
+  const markerSheetManager = new MarkerSheetManager();
   markerSheetManager.initialize();
   const sessionMarkers = markerSheetManager.getMarkers();
   const hiddenSessionIds = new Set(
@@ -16,21 +16,27 @@ global.entrypoint = function (): void {
       .map(([sessionId]) => sessionId),
   );
 
-  const sessionManager = new SessionManager(eventData, hiddenSessionIds);
-  const dates = Object.keys(sessionManager.sessionsByDate).sort();
-  Logger.log("Dates: %s", dates);
+  const timezone = markerSheetManager.spreadsheet.getSpreadsheetTimeZone();
+  const sessionManager = new SessionManager(
+    eventData,
+    hiddenSessionIds,
+    timezone,
+  );
+  const eventDayManager = new EventDayManager(
+    sessionManager.eventDayMetadata,
+    ENVIRONMENT.SESSION_URL_TEMPLATE,
+  );
+  markerSheetManager.syncSessionDetails(sessionManager, eventDayManager);
 
-  dates.forEach((date, day) => {
-    const dailySessionManager = sessionManager.sessionsByDate[date];
-    Logger.log(
-      "Day %d: Date: %s, Sessions: %d, Starts at: %s, Ends at: %s",
-      day + 1,
-      date,
-      dailySessionManager.sessions.length,
-      dailySessionManager.startsAt.toISOString(),
-      dailySessionManager.endsAt.toISOString(),
+  eventDayManager.days.forEach(({ day, date }) => {
+    const dailySessionManager =
+      sessionManager.getDailySessionManagerByDate(date);
+    if (!dailySessionManager) return;
+    new SessionSheetManager(
+      day,
+      dailySessionManager,
+      sessionMarkers,
+      eventDayManager,
     );
-
-    new SessionSheetManager(day + 1, dailySessionManager, sessionMarkers);
   });
 };

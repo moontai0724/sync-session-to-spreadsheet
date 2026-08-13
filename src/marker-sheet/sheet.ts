@@ -4,6 +4,7 @@ export const SESSION_PRIORITIES = [
   "notable",
 ] as const;
 export const SESSION_MARKER_LEVELS = [
+  "hidden",
   "special",
   ...SESSION_PRIORITIES,
 ] as const;
@@ -13,6 +14,7 @@ export type SessionMarkerLevel = typeof SESSION_MARKER_LEVELS[number];
 
 export interface SessionMarker {
   readonly priority?: SessionPriority;
+  readonly hidden: boolean;
   readonly special: boolean;
 }
 
@@ -79,13 +81,27 @@ export class MarkerSheetManager {
       }
 
       const current = markers.get(sessionId);
+      if (level === "hidden") {
+        markers.set(sessionId, {
+          ...current,
+          hidden: true,
+          special: current?.special ?? false,
+        });
+        return;
+      }
+
       if (level === "special") {
-        markers.set(sessionId, { ...current, special: true });
+        markers.set(sessionId, {
+          ...current,
+          hidden: current?.hidden ?? false,
+          special: true,
+        });
         return;
       }
 
       markers.set(sessionId, {
         priority: getHigherPriority(current?.priority, level),
+        hidden: current?.hidden ?? false,
         special: current?.special ?? false,
       });
     });

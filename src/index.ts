@@ -10,8 +10,13 @@ global.entrypoint = function (): void {
   const markerSheetManager = new MarkerSheetManager(eventData);
   markerSheetManager.initialize();
   const sessionMarkers = markerSheetManager.getMarkers();
+  const hiddenSessionIds = new Set(
+    Array.from(sessionMarkers.entries())
+      .filter(([, marker]) => marker.hidden)
+      .map(([sessionId]) => sessionId),
+  );
 
-  const sessionManager = new SessionManager(eventData);
+  const sessionManager = new SessionManager(eventData, hiddenSessionIds);
   const dates = Object.keys(sessionManager.sessionsByDate).sort();
   Logger.log("Dates: %s", dates);
 

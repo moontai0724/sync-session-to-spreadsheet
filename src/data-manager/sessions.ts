@@ -10,12 +10,10 @@ export class SessionManager {
   public readonly activeTypes: Map<EventSessionTypeId, EventSessionType> =
     new Map();
 
-  public constructor({
-    sessions,
-    speakers,
-    rooms,
-    session_types: sessionTypes,
-  }: EventData) {
+  public constructor(
+    { sessions, speakers, rooms, session_types: sessionTypes }: EventData,
+    hiddenSessionIds: ReadonlySet<EventSessionId> = new Set(),
+  ) {
     const deps: CreateSessionDeps = {
       speakersById: toMapById(speakers),
       roomsById: toMapById(rooms),
@@ -23,6 +21,8 @@ export class SessionManager {
     };
 
     for (const rawSession of sessions) {
+      if (hiddenSessionIds.has(rawSession.id)) continue;
+
       if (!rawSession.start || !rawSession.end) {
         Logger.log(
           `WARN: Session ${rawSession.id} has no start or end time, skipping it.`,

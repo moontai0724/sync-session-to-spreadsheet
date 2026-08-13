@@ -30,7 +30,8 @@ export const SESSION_PRIORITY_COLORS: Record<SessionPriority, string> = {
   necessary: "#FCE5CD",
   notable: "#CFE2F3",
 };
-export const SPECIAL_SESSION_COLOR = "#B6D7A8";
+export const SPECIAL_MARKER_BACKGROUND_COLOR = "#B6D7A8";
+export const SPECIAL_SESSION_BORDER_COLOR = "#CC0000";
 
 export class MarkerSheetManager {
   public readonly spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet;
@@ -164,7 +165,7 @@ export class MarkerSheetManager {
     const rules = [
       SpreadsheetApp.newConditionalFormatRule()
         .whenFormulaSatisfied(`=$B${FIRST_DATA_ROW}="special"`)
-        .setBackground(SPECIAL_SESSION_COLOR)
+        .setBackground(SPECIAL_MARKER_BACKGROUND_COLOR)
         .setRanges([range])
         .build(),
       ...SESSION_PRIORITIES.map(priority =>

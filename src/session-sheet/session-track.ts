@@ -1,7 +1,7 @@
 import type { Session } from "../data-manager/session";
 import {
   SESSION_PRIORITY_COLORS,
-  SPECIAL_SESSION_COLOR,
+  SPECIAL_SESSION_BORDER_COLOR,
   type SessionMarker,
 } from "../marker-sheet";
 import type { TimeManager } from "./time-slot";
@@ -86,7 +86,7 @@ export class SessionTrackManager {
         true,
         false,
         false,
-        marker?.special ? SPECIAL_SESSION_COLOR : "black",
+        marker?.special ? SPECIAL_SESSION_BORDER_COLOR : "black",
         marker?.special
           ? SpreadsheetApp.BorderStyle.SOLID_THICK
           : SpreadsheetApp.BorderStyle.SOLID,

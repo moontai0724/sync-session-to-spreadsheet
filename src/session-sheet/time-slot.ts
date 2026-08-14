@@ -53,9 +53,11 @@ export class TimeManager {
     if (endAt <= startAt)
       throw new RangeError("endAt must be later than startAt");
 
+    const unitMilliseconds = minutesPerUnit * MINUTE_IN_MILLISECONDS;
+    const roundedStartAt = floorToUnit(startAt, minutesPerUnit);
     const roundedEndAt = ceilToHour(endAt);
-    const duration = roundedEndAt.getTime() - startAt.getTime();
-    if (duration % (minutesPerUnit * MINUTE_IN_MILLISECONDS) !== 0) {
+    const duration = roundedEndAt.getTime() - roundedStartAt.getTime();
+    if (duration % unitMilliseconds !== 0) {
       throw new RangeError(
         "The time range must be evenly divisible by minutesPerUnit",
       );
@@ -64,13 +66,13 @@ export class TimeManager {
     this.sheet = sheet;
     this.fromRow = fromRow;
     this.fromColumn = fromColumn;
-    this.startAt = new Date(startAt.getTime());
+    this.startAt = roundedStartAt;
     this.endAt = roundedEndAt;
     this.minutesPerUnit = minutesPerUnit;
     this.headers = headers;
     this.columnWidth = columnWidth;
     this.borderColor = borderColor;
-    this.unitMilliseconds = minutesPerUnit * MINUTE_IN_MILLISECONDS;
+    this.unitMilliseconds = unitMilliseconds;
     this.slots = this.createSlots();
   }
 
@@ -119,18 +121,16 @@ export class TimeManager {
     }
   }
 
-  public getRowByTime(time: Date): number {
+  public getRowByTime(time: Date, roundUp = false): number {
     validateDate("time", time);
 
     const offset = time.getTime() - this.startAt.getTime();
     if (offset < 0 || time > this.endAt) {
       throw new RangeError("time must be within the rendered time range");
     }
-    if (offset % this.unitMilliseconds !== 0) {
-      throw new RangeError("time must align with a time slot");
-    }
-
-    return this.fromRow + 1 + offset / this.unitMilliseconds;
+    const unitOffset = offset / this.unitMilliseconds;
+    const slotOffset = roundUp ? Math.ceil(unitOffset) : Math.floor(unitOffset);
+    return this.fromRow + 1 + slotOffset;
   }
 
   private createSlots(): Date[] {
@@ -144,6 +144,16 @@ export class TimeManager {
     }
     return slots;
   }
+}
+
+function floorToUnit(date: Date, minutesPerUnit: number): Date {
+  const result = new Date(date.getTime());
+  result.setMinutes(
+    Math.floor(result.getMinutes() / minutesPerUnit) * minutesPerUnit,
+    0,
+    0,
+  );
+  return result;
 }
 
 function ceilToHour(date: Date): Date {

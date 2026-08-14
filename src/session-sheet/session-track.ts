@@ -54,23 +54,60 @@ export class SessionTrackManager {
           a.session.startsAt.getTime() - b.session.startsAt.getTime() ||
           a.index - b.index,
       )
-      .map(({ session }) => session);
+      .map(({ session }) => ({
+        session,
+        startRow: this.timeManager.getRowByTime(session.startsAt),
+        naturalEndRow: this.timeManager.getRowByTime(session.endsAt, true),
+      }));
 
-    sessions.forEach((session, index) => {
-      const nextSession = sessions[index + 1];
-      const effectiveEndAt =
-        nextSession && nextSession.startsAt < session.endsAt
-          ? nextSession.startsAt
+    sessions.forEach((current, index) => {
+      const { session, startRow, naturalEndRow } = current;
+      const next = sessions[index + 1];
+      const hasSlotConflict =
+        next !== undefined && next.startRow < naturalEndRow;
+      const endRow = hasSlotConflict ? next.startRow : naturalEndRow;
+
+      if (next && hasSlotConflict) {
+        const hasRawOverlap = next.session.startsAt < session.endsAt;
+        const rawOverlapEnd =
+          next.session.endsAt < session.endsAt
+            ? next.session.endsAt
+            : session.endsAt;
+        const rawOverlap = hasRawOverlap
+          ? `${next.session.startsAt.toISOString()}–${rawOverlapEnd.toISOString()}`
+          : "none (rounding-induced slot conflict)";
+        Logger.log(
+          `WARN: Session conflict in room ${this.room.id}: ` +
+            `current=${session.id}, next=${next.session.id}, ` +
+            `raw overlap=${rawOverlap}, ` +
+            `slot overlap=rows ${next.startRow}–${naturalEndRow}, ` +
+            `current truncated end=${next.session.startsAt.toISOString()} ` +
+            `(row ${next.startRow}).`,
+        );
+      }
+
+      if (endRow <= startRow) {
+        const effectiveEndAt = hasSlotConflict
+          ? next.session.startsAt
           : session.endsAt;
-      if (effectiveEndAt <= session.startsAt) return;
+        Logger.log(
+          `WARN: Session ${session.id} in room ${this.room.id} skipped: ` +
+            `no visible slot after rounding/conflict truncation ` +
+            `(${session.startsAt.toISOString()}–${effectiveEndAt.toISOString()}, ` +
+            `rows ${startRow}–${endRow}).`,
+        );
+        return;
+      }
 
-      this.renderSession(session, effectiveEndAt);
+      this.renderSession(session, startRow, endRow);
     });
   }
 
-  private renderSession(session: Session, endAt: Date): void {
-    const startRow = this.timeManager.getRowByTime(session.startsAt);
-    const endRow = this.timeManager.getRowByTime(endAt);
+  private renderSession(
+    session: Session,
+    startRow: number,
+    endRow: number,
+  ): void {
     const richValue = SpreadsheetApp.newRichTextValue()
       .setText(formatSession(session))
       .setLinkUrl(this.eventDayManager.getSessionUrl(session.id))

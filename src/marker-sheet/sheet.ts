@@ -6,6 +6,7 @@ export const SESSION_PRIORITIES = [
   "important",
   "necessary",
   "notable",
+  "ignored",
 ] as const;
 export const SESSION_MARKER_LEVELS = [
   "hidden",
@@ -35,6 +36,7 @@ export const SESSION_PRIORITY_COLORS: Record<SessionPriority, string> = {
   important: "#F4CCCC",
   necessary: "#FCE5CD",
   notable: "#CFE2F3",
+  ignored: "#EEEEEE",
 };
 export const SPECIAL_MARKER_BACKGROUND_COLOR = "#B6D7A8";
 export const SPECIAL_SESSION_BORDER_COLOR = "#CC0000";
